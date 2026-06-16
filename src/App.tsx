@@ -30,23 +30,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const WAITING_PATRONS = [
-  { emoji: '🧑', offset: -4 },
-  { emoji: '👩', offset: 2 },
-  { emoji: '👦', offset: -2 },
-  { emoji: '👧', offset: 4 },
-  { emoji: '🧑‍🦰', offset: -1 },
-  { emoji: '👱‍♀️', offset: 3 },
-  { emoji: '👨', offset: -3 },
-  { emoji: '👩‍🦳', offset: 1 },
-  { emoji: '👵', offset: 0 },
-  { emoji: '👴', offset: -2 },
-  { emoji: '👱‍♂️', offset: 2 },
-  { emoji: '🧒', offset: -3 },
-  { emoji: '🦁', offset: 1 },
-  { emoji: '🐱', offset: 0 },
-];
-
 const ALL_VARIETIES: SushiVariety[] = [
   'maguro',      // Red
   'california',  // Purple
@@ -283,6 +266,8 @@ export default function App() {
   const [isSimPaused, setIsSimPaused] = useState(false);
   const [dockCrashThreshold, setDockCrashThreshold] = useState(5);
   const [total360Rotations, setTotal360Rotations] = useState(0);
+  const [zenBaseBeltSpeed, setZenBaseBeltSpeed] = useState(850);
+  const [classicBaseBeltSpeed, setClassicBaseBeltSpeed] = useState(1150);
 
   // NEW TWEAK / LEVEL BUILDER STATES
   const [tweakNumCustomers, setTweakNumCustomers] = useState<number>(8);
@@ -677,10 +662,9 @@ export default function App() {
 
     const interval = setInterval(() => {
       setGameState((prev) => {
-        const baseSpeed = Math.max(500, 850 - prev.level * 60);
+        const baseSpeed = zenBaseBeltSpeed;
         if (prev.beltSpeed >= baseSpeed) return prev;
-        
-        // Decay speed back to baseSpeed
+
         const nextSpeed = Math.min(baseSpeed, prev.beltSpeed + (baseSpeed - prev.beltSpeed) * 0.12);
         return {
           ...prev,
@@ -692,6 +676,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [
     gameMode,
+    zenBaseBeltSpeed,
     gameState.isGameOver,
     levelUpMessage,
     showTutorial,
@@ -750,7 +735,7 @@ export default function App() {
     const timers = arrivingSeatIndexes.map((seatIndex) => {
       return setTimeout(() => {
         handleCustomerArrived(seatIndex);
-      }, 1500);
+      }, tweakSpawnFrequency);
     });
 
     return () => {
@@ -917,9 +902,10 @@ export default function App() {
   // Handles feeding tick transitions and customer satisfaction payouts
   const feedCustomerAtSeat = (seatIndex: number, plateCount: number) => {
     sfx.playIntercept();
-    
-    // There is EXACTLY a 2 seconds delay of their eating 1 dish
-    const delay = 2000;
+
+    const eatDelay = gameMode === 'tweak' ? tweakTimeToEat : 2000;
+    const leaveDelay = gameMode === 'tweak' ? tweakTimeToLeave : 1500;
+    const satisfiedDelay = gameMode === 'tweak' ? tweakTimeToEat : 2000;
 
     setTimeout(() => {
       setGameState((prev) => {
@@ -1011,11 +997,11 @@ export default function App() {
 
                 // Level-up will be reactively triggered by useEffect once the board is fully empty and cleared
 
-              }, 1000);
+              }, gameMode === 'tweak' ? tweakSpawnFrequency : 1000);
 
-            }, 1500);
+            }, leaveDelay);
 
-          }, 2000);
+          }, satisfiedDelay);
 
           return {
             ...prev,
@@ -1032,7 +1018,7 @@ export default function App() {
           };
         }
       });
-    }, delay);
+    }, eatDelay);
   };
 
   // Handles level progression and resets stats
@@ -1242,7 +1228,7 @@ export default function App() {
       totalCustomersRequired: lData.totalCustomersRequired,
       levelCustomersTemplates: lData.levelCustomersTemplates,
       nextCustomerIndex: lData.nextCustomerIndex,
-      beltSpeed: 1150,
+      beltSpeed: gameMode === 'zen' ? zenBaseBeltSpeed : classicBaseBeltSpeed,
     });
     setLevelUpMessage(null);
   };
@@ -1258,16 +1244,21 @@ export default function App() {
       <MainMenu
         onSelectMode={(mode) => {
           setGameMode(mode);
+          if (mode === 'zen') {
+            setZenBaseBeltSpeed(850);
+          } else if (mode === 'classic') {
+            setClassicBaseBeltSpeed(1150);
+          }
           handleRestartGame();
           if (mode === 'zen') {
             setGameState(prev => ({
               ...prev,
-              beltSpeed: 850, // Much smoother 2x continuous speed!
+              beltSpeed: 850,
             }));
-          } else {
+          } else if (mode === 'classic') {
             setGameState(prev => ({
               ...prev,
-              beltSpeed: 1150, // Standard retro speed
+              beltSpeed: 1150,
             }));
           }
         }}
@@ -1281,7 +1272,7 @@ export default function App() {
 
   return (
     <div 
-      className={`w-full h-screen max-h-screen flex items-center justify-center p-0 select-none relative font-sans antialiased overflow-hidden transition-all duration-500 ${
+      className={`w-full h-screen max-h-screen flex items-stretch justify-center p-0 select-none relative font-sans antialiased overflow-hidden transition-all duration-500 ${
         gameMode === 'zen' ? 'bg-[#edd4b8] text-[#5c3a21]' : (gameMode === 'tweak' ? 'bg-[#030712] text-slate-100 tweak-mode' : 'bg-[#111] text-[#f5f5f0]')
       }`}
       style={{
@@ -1874,212 +1865,15 @@ export default function App() {
         </div>
       ) : (
         <div 
-          className={`w-full max-w-5xl h-auto xl:h-[762px] flex flex-col xl:flex-row overflow-hidden shadow-2xl transition-all duration-500 ${
+          className={`w-full h-full max-h-full min-h-0 max-w-[min(100vw,1400px)] flex flex-col xl:flex-row overflow-hidden shadow-2xl transition-all duration-500 ${
             gameMode === 'zen' 
               ? 'bg-[#fffcf8] xl:border-[8px] xl:border-[#8a5a36] xl:rounded-[36px]' 
               : 'bg-[#141414] xl:border xl:border-[#2d2d2d] xl:rounded-3xl'
           }`}
         >
-        {/* DEVELOPER MONITOR AND INSPECTOR PANEL (Left Column - 400px width) */}
-        <div
-          id="developer-inspector"
-          style={{ display: gameMode === 'tweak' ? 'flex' : 'none' }}
-          className="w-[400px] h-full shrink-0 bg-[#060a12] border-r border-[#192437] flex flex-col justify-between p-4 font-mono select-none overflow-y-auto text-slate-300 relative z-20"
-        >
-          <div className="space-y-4">
-            {/* Dashboard Title Header */}
-            <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl animate-pulse">⚙️</span>
-                <div>
-                  <h2 className="text-xs font-black tracking-wider text-teal-400 select-none leading-none">
-                    TWEAK_PROT_v3.2
-                  </h2>
-                  <span className="text-[7.5px] uppercase tracking-widest text-[#475569] font-extrabold block mt-0.5">
-                    Node & Circle Calibrator
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setGameMode('menu');
-                  setIsSimPaused(false);
-                }}
-                className="px-1.5 py-1 text-[8px] bg-slate-900 border border-slate-700 hover:bg-slate-850 text-slate-300 rounded font-bold uppercase transition cursor-pointer"
-              >
-                ⛩️ BACK_TO_MENU
-              </button>
-            </div>
-
-            {/* GLOBAL CLOCK TRACKER & TELEMETRY */}
-            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5">
-              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
-                SYS STATUS & METRICS
-              </h3>
-              
-              <div className="grid grid-cols-2 gap-1.5 text-[9px]">
-                <div className="bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
-                  <span className="text-[6.5px] text-slate-500 block uppercase font-bold">STATE</span>
-                  <span className={`font-black uppercase tracking-wider ${isSimPaused ? 'text-amber-500 animate-pulse' : 'text-emerald-400'}`}>
-                    ● {isSimPaused ? 'PAUSED' : 'RUNNING_OP'}
-                  </span>
-                </div>
-                <div className="bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
-                  <span className="text-[6.5px] text-slate-500 block uppercase font-bold">SATISFIED</span>
-                  <span className="font-extrabold text-[#fafaf9]">
-                    {gameState.customersServed} CLIENTS
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 1: CUSTOMER WAITING FORECAST */}
-            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5">
-              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
-                SECTION_1: LOBBY INCOMING QUEUE
-              </h3>
-              <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded text-[9.5px]">
-                <span className="text-slate-400 uppercase text-[8px]">Queue length count</span>
-                <span className="font-mono font-black text-sky-400 bg-sky-950/40 border border-sky-900/50 px-1.5 py-0.5 rounded text-[9px]">
-                  {gameState.levelCustomersTemplates.length - gameState.nextCustomerIndex} INCOMING
-                </span>
-              </div>
-            </div>
-
-            {/* SECTION 2: CONVEYOR GRID & BUFFER OCCUPANCY */}
-            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5 text-slate-300">
-              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
-                SECTION_2: CONVEYOR OVERSEER
-              </h3>
-              <div className="space-y-1 text-[9px]">
-                <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
-                  <span className="uppercase text-slate-400 text-[8px]">Slots occupancy</span>
-                  <span className="font-bold text-[#fafaf9]">
-                    {gameState.beltPlates.length} / 12 FILLED
-                  </span>
-                </div>
-                <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
-                  <span className="uppercase text-slate-400 text-[8px]">Total rotation loops (360°)</span>
-                  <span className="font-mono font-black text-teal-400">
-                    {total360Rotations} COMPLETE
-                  </span>
-                </div>
-                <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
-                  <span className="uppercase text-slate-400 text-[8px]">Tray buffer load</span>
-                  <span className={`font-bold ${gameState.freeSlots.filter(s => s !== null).length >= dockCrashThreshold - 1 ? 'text-rose-500 animate-pulse' : 'text-emerald-400'}`}>
-                    {gameState.freeSlots.filter(s => s !== null).length} / {dockCrashThreshold} SLOTS
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 3: DEEP-PIPELINE TRACKS */}
-            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5">
-              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
-                SECTION_3: INPUT TRACK MONITORS
-              </h3>
-              <div className="grid grid-cols-3 gap-1.5 text-[9px]">
-                <div className="bg-[#070a14] border border-slate-900/60 p-1 rounded flex flex-col items-center">
-                  <span className="text-[6.5px] text-slate-500 uppercase font-black">Track 0</span>
-                  <span className="font-bold text-indigo-400 mt-0.5">{gameState.queues[0]?.length || 0} nodes</span>
-                </div>
-                <div className="bg-[#070a14] border border-slate-900/60 p-1 rounded flex flex-col items-center">
-                  <span className="text-[6.5px] text-slate-500 uppercase font-black">Track 1</span>
-                  <span className="font-bold text-indigo-400 mt-0.5">{gameState.queues[1]?.length || 0} nodes</span>
-                </div>
-                <div className="bg-[#070a14] border border-slate-900/60 p-1 rounded flex flex-col items-center">
-                  <span className="text-[6.5px] text-slate-500 uppercase font-black">Track 2</span>
-                  <span className="font-bold text-indigo-400 mt-0.5">{gameState.queues[2]?.length || 0} nodes</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* OPERATIONS CONTROL BASEBOARD */}
-          <div className="mt-2 border-t border-slate-800 pt-2.5 space-y-2.5 text-slate-300">
-            <h3 className="text-[8px] font-black text-teal-400 uppercase tracking-wider block">
-              🛰️ CALIBRATOR CORE
-            </h3>
-
-            {/* SIM HEARTBEAT TOGGLE BUTTON */}
-            <div className="space-y-0.5">
-              <span className="text-[7px] text-slate-400 uppercase font-bold block">Heartbeat control (Active Cycle)</span>
-              <button
-                 onClick={() => {
-                   sfx.playCoinDing();
-                   setIsSimPaused(!isSimPaused);
-                 }}
-                 className={`w-full py-1 text-[9px] font-mono uppercase font-black rounded border cursor-pointer select-none transition-all duration-200 flex items-center justify-center gap-1.5 ${
-                   isSimPaused
-                     ? 'bg-amber-950/80 border-amber-500 text-amber-400 hover:bg-amber-900/90 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
-                     : 'bg-emerald-950/80 border-emerald-500 text-emerald-400 hover:bg-emerald-900/90 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
-                  }`}
-              >
-                <span>{isSimPaused ? '▶️ RESUME HEARTBEAT' : '⏸️ PAUSE HEARTBEAT'}</span>
-              </button>
-            </div>
-
-            {/* LOOP SPEED SLIDER */}
-            <div className="space-y-1">
-              <div className="flex justify-between items-center text-[7.5px] uppercase tracking-wider text-slate-400 font-bold">
-                <span>Calibration Tick delay</span>
-                <span className="font-mono text-teal-400 font-black">{gameState.beltSpeed}ms</span>
-              </div>
-              <input
-                type="range"
-                min="200"
-                max="2000"
-                step="50"
-                value={gameState.beltSpeed}
-                onChange={(e) => {
-                  const spd = parseInt(e.target.value, 10);
-                  setGameState(prev => ({ ...prev, beltSpeed: spd }));
-                }}
-                className="w-full accent-teal-500 h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="flex justify-between text-[6.5px] text-[#475569] uppercase font-bold">
-                <span>Rapid (200ms)</span>
-                <span>Sluggish (2000ms)</span>
-              </div>
-            </div>
-
-            {/* DOCK CRASH THRESHOLD CONTROLLER */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-[7.5px] uppercase tracking-wider text-slate-400 font-bold col-span-2">
-                <span>Buffer Dock Crash Limit</span>
-                <span className="font-mono text-rose-400 font-black">{dockCrashThreshold} SLOTS</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  onClick={() => {
-                    sfx.playDispatch();
-                    setDockCrashThreshold(t => Math.max(1, t - 1));
-                  }}
-                  className="py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-rose-500 hover:text-rose-400 font-bold uppercase tracking-widest text-[8.5px] cursor-pointer"
-                >
-                  - DECREASE
-                </button>
-                <button
-                  onClick={() => {
-                    sfx.playDispatch();
-                    setDockCrashThreshold(t => Math.min(12, t + 1));
-                  }}
-                  className="py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-emerald-500 hover:text-emerald-400 font-bold uppercase tracking-widest text-[8.5px] cursor-pointer"
-                >
-                  + INCREASE
-                </button>
-              </div>
-              <span className="text-[6.5px] text-[#475569] uppercase font-bold text-center block">
-                Adjusts the fail state threshold dynamically on the fly
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* LEFT SIDEBAR: Static game metadata of Kaizen restaraunt */}
         <aside 
-          style={{ display: gameMode === 'tweak' ? 'none' : undefined }}
-          className={`w-72 flex flex-col justify-between hidden xl:flex shrink-0 transition-all duration-500 ${
+          className={`w-72 h-full min-h-0 flex flex-col justify-between hidden xl:flex shrink-0 overflow-hidden transition-all duration-500 ${
             gameMode === 'zen' 
               ? 'border-r-2 border-[#b5835a]/30 bg-[#faf2e9]' 
               : 'border-r border-[#2d2d2d] bg-[#141414]'
@@ -2098,7 +1892,7 @@ export default function App() {
             </h1>
           </div>
 
-          <div className="p-6 flex-1 flex flex-col justify-between space-y-6">
+          <div className="p-6 flex-1 min-h-0 flex flex-col justify-between space-y-4 overflow-hidden">
             <div className="space-y-6">
               <div>
                 <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
@@ -2151,16 +1945,12 @@ export default function App() {
         </aside>
 
         {/* MIDDLE PORTRAITS WRAPPER: Mobile and Desktop primary action panel */}
-        <section className={`flex-1 w-full max-w-2xl mx-auto xl:w-[720px] xl:max-w-none p-4 flex flex-col justify-between h-full relative transition-all duration-500 ${
-          gameMode === 'tweak'
-            ? 'bg-[#030712] overflow-hidden border-r border-[#192437]'
-            : 'overflow-y-auto xl:border-r xl:border-stone-800 bg-[#121212]'
-        } ${
-          gameMode === 'zen' ? 'bg-gradient-to-b from-[#fdf6ec] to-[#f4e6d3]' : ''
+        <section className={`flex-1 min-h-0 w-full max-w-2xl mx-auto xl:w-[720px] xl:max-w-none p-3 xl:p-4 flex flex-col overflow-hidden h-full relative transition-all duration-500 xl:border-r xl:border-stone-800 ${
+          gameMode === 'zen' ? 'bg-gradient-to-b from-[#fdf6ec] to-[#f4e6d3]' : 'bg-[#121212]'
         }`}>
           
           {/* MOBILE ONLY COMPACT HEADER PANEL */}
-          <header className={`flex justify-between items-center p-2.5 rounded-2xl shadow-md xl:hidden mb-2 transition-all duration-300 ${
+          <header className={`shrink-0 flex justify-between items-center p-2 rounded-2xl shadow-md xl:hidden mb-1 transition-all duration-300 ${
             gameMode === 'zen' 
               ? 'bg-[#faf2e9] border border-[#ddb892]/60 text-[#3e1f0a]' 
               : 'bg-[#141414] border border-[#2c2c2c] text-[#f5f5f0]'
@@ -2217,7 +2007,7 @@ export default function App() {
           </header>
 
           {/* DESKTOP ONLY SMALL TOP TOOLBAR */}
-          <header className={`hidden xl:flex justify-between items-center p-2 rounded-2xl shadow-md mb-2 transition-all duration-300 ${
+          <header className={`shrink-0 hidden xl:flex justify-between items-center p-2 rounded-2xl shadow-md mb-1 transition-all duration-300 ${
             gameMode === 'zen' 
               ? 'bg-[#faf2e9] border border-[#ddb892]/60 text-[#3e1f0a]' 
               : 'bg-[#1a1a1a] border border-[#2c2c2c] text-[#fafaf9]'
@@ -2260,10 +2050,10 @@ export default function App() {
           </header>
 
           {/* PLAYGROUND MIDDLE LAYERS */}
-          <div className="flex-1 flex flex-col justify-start gap-4">
+          <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
             
             {/* PREDICTIVE CUSTOMER DEMAND FORECAST BAR */}
-            <div className={`w-full flex flex-col justify-center select-none px-4 py-2 rounded-2xl border transition-all duration-500 relative shadow-sm ${
+            <div className={`w-full shrink-0 flex flex-col justify-center select-none px-3 py-1.5 rounded-2xl border transition-all duration-500 relative shadow-sm ${
               gameMode === 'zen'
                 ? 'bg-[#faefe0] border-[#ddb892]/40 text-[#8a5a36]'
                 : 'bg-[#191919] border-[#2c2c2c] text-stone-400'
@@ -2337,7 +2127,7 @@ export default function App() {
             </div>
 
             {/* SINGLE UNIFIED DOORWAY ENTRY SYSTEM */}
-            <div id="unified-central-entry-rail" className={`w-full flex flex-col items-center mb-1 select-none overflow-visible rounded-2xl relative border p-2.5 transition-all duration-300 ${
+            <div id="unified-central-entry-rail" className={`w-full shrink-0 flex flex-col items-center mb-0 select-none overflow-visible rounded-2xl relative border p-2 transition-all duration-300 ${
               gameMode === 'zen'
                 ? 'bg-[#faefe0]/80 border-[#edd2b6]/40 shadow-inner'
                 : 'bg-[#181818] border-stone-850 shadow-md'
@@ -2422,16 +2212,18 @@ export default function App() {
             </div>
 
             {/* THE CONVEYOR & DINERS LAYOUT (Left seat, Conveyor, Right seat) */}
-            <div id="diners-conveyor-wrapper" className={`flex items-center justify-between gap-1 w-full relative overflow-visible transition-colors duration-500 ${
+            <div id="game-stage" className="game-stage w-full min-h-0 flex-1">
+              <div className="w-full max-h-full flex items-center justify-center min-h-0 max-w-full px-0.5">
+            <div id="diners-conveyor-wrapper" className={`flex items-center justify-center gap-0.5 w-full max-h-full relative overflow-hidden transition-colors duration-500 ${
               gameMode === 'zen' 
                 ? 'bg-transparent border-none p-0' 
-                : 'bg-[#141414] p-3.5 border border-stone-850 shadow-lg rounded-2xl'
+                : 'bg-[#141414] p-2 border border-stone-850 shadow-lg rounded-2xl'
             }`}>
               
 
 
               {/* Left Seats */}
-              <div id="left-seat-frame" className="flex flex-col gap-1 items-center z-10 overflow-visible w-16 shrink-0">
+              <div id="left-seat-frame" className="flex flex-col gap-0.5 items-center z-10 overflow-visible w-14 xl:w-16 shrink-0">
                 <CustomerSeat 
                   customer={gameState.customers[0]} 
                   seatIndex={0} 
@@ -2449,9 +2241,7 @@ export default function App() {
               </div>
 
               {/* Conveyor Belt in center */}
-              <div id="conveyor-belt-frame" className={`overflow-visible transition-all duration-500 flex-[3] ${
-                gameMode === 'zen' ? 'max-w-[560px] w-full' : 'max-w-[420px] w-full'
-              }`}>
+              <div id="conveyor-belt-frame" className="overflow-hidden transition-all duration-500 flex-[3] min-w-0 w-full max-h-full">
                 <ConveyorBelt
                   plates={gameState.beltPlates}
                   highlightedSlots={beltWarnings}
@@ -2473,7 +2263,7 @@ export default function App() {
               </div>
 
               {/* Right Seats */}
-              <div id="right-seat-frame" className="flex flex-col gap-1 items-center z-10 overflow-visible w-16 shrink-0">
+              <div id="right-seat-frame" className="flex flex-col gap-0.5 items-center z-10 overflow-visible w-14 xl:w-16 shrink-0">
                 <CustomerSeat 
                   customer={gameState.customers[2]} 
                   seatIndex={2} 
@@ -2491,8 +2281,11 @@ export default function App() {
               </div>
 
             </div>
+              </div>
+            </div>
 
             {/* BUFFER STORAGE TRAY */}
+            <div className="shrink-0 w-full">
             <FreeBuffer
               freeSlots={gameState.freeSlots}
               hasUnlockedFifthSlot={gameState.hasUnlockedFifthSlot}
@@ -2508,8 +2301,10 @@ export default function App() {
               playerCoins={gameState.coins}
               variant={gameMode}
             />
+            </div>
 
             {/* INGREDIENT QUEUES */}
+            <div className="shrink-0 w-full">
             <QueueDispenser
               queues={gameState.queues}
               onDispatch={handleDispatchQueue}
@@ -2517,10 +2312,11 @@ export default function App() {
               variant={gameMode}
               activeCustomerVarieties={gameState.customers.filter((c) => c && c.state === 'waiting').map((c) => c!.orderedVariety)}
             />
+            </div>
           </div>
 
           {/* MOBILE ONLY SMALL FOOTER */}
-          <footer className="mt-2.5 p-2 bg-[#141414] border border-[#2c2c2c] rounded-2xl flex justify-between items-center xl:hidden text-stone-400">
+          <footer className="shrink-0 mt-1 p-2 bg-[#141414] border border-[#2c2c2c] rounded-2xl flex justify-between items-center xl:hidden text-stone-400">
             <div className="text-left font-mono text-[9px]">
               <div>Served: {gameState.customersServed}/{gameState.totalCustomersRequired}</div>
               <div className="w-16 h-1 bg-stone-900 rounded-full mt-0.5 overflow-hidden">
@@ -2543,8 +2339,7 @@ export default function App() {
 
         {/* RIGHT SIDEBAR: Primary statistics and shop upgrades */}
         <aside 
-          style={{ display: gameMode === 'tweak' ? 'none' : undefined }}
-          className={`w-72 p-6 flex flex-col justify-between hidden xl:flex shrink-0 transition-all duration-500 ${
+          className={`w-72 h-full min-h-0 p-6 flex flex-col justify-between hidden xl:flex shrink-0 overflow-hidden transition-all duration-500 ${
             gameMode === 'zen' 
               ? 'border-l-2 border-[#b5835a]/30 bg-[#faf2e9]' 
               : 'bg-[#141414] border-l border-[#2d2d2d]'
@@ -2572,6 +2367,48 @@ export default function App() {
                   🪙{gameState.coins}
                 </span>
               </div>
+            </div>
+
+            {/* Belt speed calibration */}
+            <div className={`space-y-1.5 pt-4 border-t ${gameMode === 'zen' ? 'border-[#b5835a]/20' : 'border-[#222]'}`}>
+              <div className="flex justify-between items-center">
+                <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                  Belt Speed
+                </span>
+                <span className={`text-[9px] font-mono font-black ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-teal-400'}`}>
+                  {gameState.beltSpeed}ms
+                </span>
+              </div>
+              <input
+                type="range"
+                min="200"
+                max="2000"
+                step="50"
+                value={gameMode === 'zen' ? zenBaseBeltSpeed : classicBaseBeltSpeed}
+                onChange={(e) => {
+                  const spd = parseInt(e.target.value, 10);
+                  if (gameMode === 'zen') {
+                    setZenBaseBeltSpeed(spd);
+                    setGameState((prev) => ({
+                      ...prev,
+                      beltSpeed: Math.min(prev.beltSpeed, spd),
+                    }));
+                  } else {
+                    setClassicBaseBeltSpeed(spd);
+                    setGameState((prev) => ({ ...prev, beltSpeed: spd }));
+                  }
+                }}
+                className={`w-full h-1 rounded-lg appearance-none cursor-pointer ${gameMode === 'zen' ? 'accent-[#8a5a36] bg-[#eedbc5]/60' : 'accent-teal-500 bg-stone-900'}`}
+              />
+              <div className={`flex justify-between text-[7px] font-mono uppercase font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]/60' : 'text-stone-600'}`}>
+                <span>Fast</span>
+                <span>Slow</span>
+              </div>
+              {gameMode === 'zen' && (
+                <p className="text-[8px] font-mono text-[#8a5a36]/70 leading-snug">
+                  Tap the pond to turbo; speed decays back to this baseline.
+                </p>
+              )}
             </div>
 
             {/* Upgrades panel in dark custom flat wrapper */}

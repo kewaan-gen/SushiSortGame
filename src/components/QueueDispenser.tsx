@@ -158,7 +158,7 @@ export const QueueDispenser: React.FC<QueueDispenserProps> = ({
             return (
               <div
                 key={colIdx}
-                className="flex flex-col items-center bg-[#f7eedc] rounded-2xl border-4 border-[#b5835a]/50 hover:border-[#b5835a] shadow-inner p-2 relative h-48 justify-start pt-10 transition-all overflow-visible select-none"
+                className="flex flex-col items-center bg-[#f7eedc] rounded-2xl border-4 border-[#b5835a]/50 hover:border-[#b5835a] shadow-inner p-2 relative h-36 xl:h-40 justify-start pt-8 transition-all overflow-visible select-none"
               >
                 {/* Vertical tracks - bamboo shoots inside lanes */}
                 <div className="absolute inset-y-2 w-[5px] bg-[#4d8b31]/45 rounded-full" />
@@ -273,7 +273,7 @@ export const QueueDispenser: React.FC<QueueDispenserProps> = ({
           return (
             <div
               key={colIdx}
-              className="flex flex-col items-center bg-[#121212] border border-stone-800 p-2 relative h-48 justify-start pt-10 transition-all overflow-visible rounded-xl select-none"
+              className="flex flex-col items-center bg-[#121212] border border-stone-800 p-2 relative h-36 xl:h-40 justify-start pt-8 transition-all overflow-visible rounded-xl select-none"
             >
               {/* Vertical track line representing kitchen rail */}
               <div className="absolute inset-y-2 w-[1px] bg-[#222]" />

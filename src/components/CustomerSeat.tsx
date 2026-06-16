@@ -180,7 +180,7 @@ export const CustomerSeat: React.FC<CustomerSeatProps> = ({
   const exitY = -120;
 
   return (
-    <div className="relative flex flex-col items-center justify-end w-16 h-40 select-none overflow-visible">
+    <div className="relative flex flex-col items-center justify-end w-14 xl:w-16 h-28 xl:h-32 max-h-full select-none overflow-visible shrink-0">
       {/* Floating Order Cloud Speech Bubble */}
       <AnimatePresence mode="wait">
         {customer && customer.state !== 'arriving' && customer.state !== 'leaving' && desiredSushi && (
