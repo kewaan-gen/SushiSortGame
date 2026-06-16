@@ -1,0 +1,2863 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Plate, Customer, SushiVariety, GameState, CustomerOrderTemplate } from './types';
+import { SUSHI_VARIETIES, CHARACTER_EMOJIS, SUSHI_VARIETIES as configMap } from './sushiConfig';
+import { CustomerSeat } from './components/CustomerSeat';
+import { ConveyorBelt, SLOT_COORDS } from './components/ConveyorBelt';
+import { FreeBuffer } from './components/FreeBuffer';
+import { QueueDispenser } from './components/QueueDispenser';
+import { SushiPlate } from './components/SushiPlate';
+import { MainMenu } from './components/MainMenu';
+import { sfx } from './utils/audio';
+import { 
+  Volume2, 
+  VolumeX, 
+  HelpCircle, 
+  RotateCcw, 
+  Coins, 
+  Trophy, 
+  Sparkles, 
+  Award,
+  Play,
+  Flame,
+  CheckCircle,
+  XCircle,
+  ArrowRight
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+
+const WAITING_PATRONS = [
+  { emoji: '🧑', offset: -4 },
+  { emoji: '👩', offset: 2 },
+  { emoji: '👦', offset: -2 },
+  { emoji: '👧', offset: 4 },
+  { emoji: '🧑‍🦰', offset: -1 },
+  { emoji: '👱‍♀️', offset: 3 },
+  { emoji: '👨', offset: -3 },
+  { emoji: '👩‍🦳', offset: 1 },
+  { emoji: '👵', offset: 0 },
+  { emoji: '👴', offset: -2 },
+  { emoji: '👱‍♂️', offset: 2 },
+  { emoji: '🧒', offset: -3 },
+  { emoji: '🦁', offset: 1 },
+  { emoji: '🐱', offset: 0 },
+];
+
+const ALL_VARIETIES: SushiVariety[] = [
+  'maguro',      // Red
+  'california',  // Purple
+  'kappa',       // Green
+  'tamago',      // Yellow
+  'ebi',         // Blue
+  'salmon',      // Orange
+  'unagi',       // Pink
+  'ikura',       // Teal
+  'saba',        // Slate/Gray
+];
+
+const LEVEL_CONFIGS: {
+  levelNumber: number;
+  templates: CustomerOrderTemplate[];
+}[] = [
+  {
+    levelNumber: 1,
+    templates: [
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'maguro', orderedCount: 4 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'kappa', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'tamago', orderedCount: 6 },
+      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'maguro', orderedCount: 4 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'tamago', orderedCount: 4 },
+      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'maguro', orderedCount: 6 },
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'kappa', orderedCount: 4 },
+    ]
+  },
+  {
+    levelNumber: 2,
+    templates: [
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'maguro', orderedCount: 4 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'california', orderedCount: 6 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'tamago', orderedCount: 4 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'california', orderedCount: 4 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 6 },
+      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'tamago', orderedCount: 4 },
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'california', orderedCount: 6 },
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'kappa', orderedCount: 4 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'maguro', orderedCount: 6 },
+    ]
+  },
+  {
+    levelNumber: 3,
+    templates: [
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'maguro', orderedCount: 6 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'california', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'ebi', orderedCount: 6 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'tamago', orderedCount: 4 },
+      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'ebi', orderedCount: 4 },
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'maguro', orderedCount: 4 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'california', orderedCount: 6 },
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'ebi', orderedCount: 6 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'tamago', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'maguro', orderedCount: 6 },
+    ]
+  },
+  {
+    levelNumber: 4,
+    templates: [
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'salmon', orderedCount: 6 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'california', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'tamago', orderedCount: 8 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'ebi', orderedCount: 4 },
+      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 6 },
+      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'salmon', orderedCount: 4 },
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'california', orderedCount: 6 },
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'tamago', orderedCount: 6 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'ebi', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'salmon', orderedCount: 6 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'unagi', orderedCount: 4 },
+      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'california', orderedCount: 6 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 8 },
+    ]
+  },
+  {
+    levelNumber: 5,
+    templates: [
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'maguro', orderedCount: 6 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'unagi', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'ikura', orderedCount: 6 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'salmon', orderedCount: 6 },
+      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'ebi', orderedCount: 4 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'california', orderedCount: 6 },
+      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'tamago', orderedCount: 6 },
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'unagi', orderedCount: 4 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'ikura', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'unagi', orderedCount: 6 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'ikura', orderedCount: 6 },
+      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'salmon', orderedCount: 4 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 6 },
+      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'california', orderedCount: 6 },
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'maguro', orderedCount: 4 },
+    ]
+  }
+];
+
+const initializeLevelData = (level: number) => {
+  // Grab configuration looping if exceeded (though we end game at lvl 5)
+  const configIndex = (level - 1) % LEVEL_CONFIGS.length;
+  const config = LEVEL_CONFIGS[configIndex];
+
+  const totalCustomersRequired = config.templates.length;
+  const levelCustomersTemplates = config.templates;
+
+  const splitEvenIntoBlocks = (count: number): number[] => {
+    const blocks: number[] = [];
+    let remaining = count;
+    while (remaining > 0) {
+      if (remaining >= 6) {
+        const choices = [6, 4, 2];
+        const selected = choices[Math.floor(Math.random() * choices.length)];
+        blocks.push(selected);
+        remaining -= selected;
+      } else if (remaining >= 4) {
+        const choices = [4, 2];
+        const selected = choices[Math.floor(Math.random() * choices.length)];
+        blocks.push(selected);
+        remaining -= selected;
+      } else {
+        blocks.push(2);
+        remaining -= 2;
+      }
+    }
+    return blocks;
+  };
+
+  const listOfBlocks: Plate[][] = [];
+
+  for (const template of levelCustomersTemplates) {
+    const sizes = splitEvenIntoBlocks(template.orderedCount);
+    for (const size of sizes) {
+      const block: Plate[] = [];
+      for (let i = 0; i < size; i++) {
+        block.push({
+          id: `plate-${Math.random().toString(36).substring(2, 9)}-${Math.random().toString(36).substring(2, 5)}`,
+          variety: template.orderedVariety,
+          count: 1,
+          injectedSlot: -1,
+          currentSlot: -1,
+          stepsTaken: 0,
+        });
+      }
+      listOfBlocks.push(block);
+    }
+  }
+
+  const shuffleArray = <T,>(arr: T[]): T[] => {
+    const newArr = [...arr];
+    for (let i = newArr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+    }
+    return newArr;
+  };
+
+  const shuffledBlocks = shuffleArray(listOfBlocks);
+
+  const q0: Plate[] = [];
+  const q1: Plate[] = [];
+  const q2: Plate[] = [];
+  const queues = [q0, q1, q2];
+
+  shuffledBlocks.forEach((block, idx) => {
+    const targetQueue = queues[idx % 3];
+    targetQueue.push(...block);
+  });
+
+  const initialCustomers: (Customer | null)[] = [null, null, null, null];
+  for (let s = 0; s < 4; s++) {
+    if (totalCustomersRequired > s && levelCustomersTemplates[s]) {
+      const t = levelCustomersTemplates[s];
+      initialCustomers[s] = {
+        id: `cust-${s}-${Math.random().toString(36).substring(2, 7)}`,
+        seatIndex: s,
+        characterName: t.characterName,
+        characterEmoji: t.characterEmoji,
+        orderedVariety: t.orderedVariety,
+        orderedCount: t.orderedCount,
+        satisfiedCount: 0,
+        state: 'arriving',
+        bowlCount: 0,
+        chopstickTicks: 0,
+      };
+    }
+  }
+
+  return {
+    totalCustomersRequired,
+    levelCustomersTemplates,
+    queues,
+    customers: initialCustomers,
+    nextCustomerIndex: totalCustomersRequired > 4 ? 4 : totalCustomersRequired,
+  };
+};
+
+const INITIAL_LEVEL = 1;
+
+export default function App() {
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const lData = initializeLevelData(1);
+    return {
+      score: 0,
+      coins: 100, // Starts with some spending coins
+      level: 1,
+      beltPlates: [],
+      freeSlots: Array(5).fill(null), // Slot index 4 is the locked fifth slot
+      hasUnlockedFifthSlot: false,
+      queues: lData.queues,
+      customers: lData.customers,
+      isGameOver: false,
+      customersServed: 0,
+      totalCustomersRequired: lData.totalCustomersRequired,
+      levelCustomersTemplates: lData.levelCustomersTemplates,
+      nextCustomerIndex: lData.nextCustomerIndex,
+      beltSpeed: 1150, // 2x faster continuous motion (1150ms instead of 2300ms)
+    };
+  });
+
+  const [isMuted, setIsMuted] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [hasFirstLaunch, setHasFirstLaunch] = useState(false);
+  const [levelUpMessage, setLevelUpMessage] = useState<string | null>(null);
+  const [showAdSpinner, setShowAdSpinner] = useState(false);
+  const [lastTickTime, setLastTickTime] = useState<number>(Date.now());
+  
+  const [gameMode, setGameMode] = useState<'menu' | 'classic' | 'zen' | 'tweak'>('menu');
+  const [isSimPaused, setIsSimPaused] = useState(false);
+  const [dockCrashThreshold, setDockCrashThreshold] = useState(5);
+  const [total360Rotations, setTotal360Rotations] = useState(0);
+
+  // NEW TWEAK / LEVEL BUILDER STATES
+  const [tweakNumCustomers, setTweakNumCustomers] = useState<number>(8);
+  const [tweakNumDishTypes, setTweakNumDishTypes] = useState<number>(3);
+  const [tweakCustomerDemands, setTweakCustomerDemands] = useState<{dishId: number; quantity: number}[]>(() => {
+    return Array.from({ length: 24 }).map((_, idx) => ({
+      dishId: idx % 3,
+      quantity: 4,
+    }));
+  });
+
+  // Keep customer demands synchronized with changes in tweakNumCustomers
+  useEffect(() => {
+    setTweakCustomerDemands(prev => {
+      const copy = [...prev];
+      if (copy.length < tweakNumCustomers) {
+        for (let i = copy.length; i < tweakNumCustomers; i++) {
+          copy.push({ dishId: i % tweakNumDishTypes, quantity: 4 });
+        }
+      }
+      return copy;
+    });
+  }, [tweakNumCustomers, tweakNumDishTypes]);
+
+  const [tweakNumBeltSlots, setTweakNumBeltSlots] = useState<number>(12);
+  const [tweakNumSeats, setTweakNumSeats] = useState<number>(4);
+  const [tweakNumFreeDocks, setTweakNumFreeDocks] = useState<number>(5);
+
+  const [tweakTimeToEat, setTweakTimeToEat] = useState<number>(2000);
+  const [tweakBeltSpeed, setTweakBeltSpeed] = useState<number>(1150);
+  const [tweakTimeToLeave, setTweakTimeToLeave] = useState<number>(1500);
+  const [tweakSpawnFrequency, setTweakSpawnFrequency] = useState<number>(1000);
+
+  const [tweakNumQueues, setTweakNumQueues] = useState<number>(3);
+  const [tweakGeneratedQueues, setTweakGeneratedQueues] = useState<any[][]>([]);
+
+  // Pre-cached original varieties list for reference inside the sandbox environment
+  const ALL_VARIETIES: any[] = ['maguro', 'california', 'kappa', 'tamago', 'ebi', 'salmon', 'unagi', 'ikura', 'saba'];
+
+  const getSeatSlots = (seatsCount: number): number[] => {
+    if (seatsCount === 2) return [10, 4];
+    if (seatsCount === 3) return [10, 7, 4];
+    if (seatsCount === 4) return [10, 11, 5, 4];
+    if (seatsCount === 5) return [10, 11, 8, 5, 4];
+    if (seatsCount === 6) return [10, 11, 8, 7, 5, 4];
+    if (seatsCount === 7) return [10, 11, 9, 8, 6, 5, 4];
+    return [10, 11, 9, 8, 7, 6, 5, 4]; // 8 seats
+  };
+
+  const [savedLevels, setSavedLevels] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('kaizen_saved_levels');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      // ignore
+    }
+    // Return pristine pre-populated developer default level configurations
+    return [
+      {
+        id: 'sample-lvl-1',
+        name: '🍣 Sandbox Challenge 1',
+        numCustomers: 6,
+        numDishTypes: 3,
+        customerDemands: [
+          { dishId: 0, quantity: 4 },
+          { dishId: 1, quantity: 4 },
+          { dishId: 2, quantity: 6 },
+          { dishId: 0, quantity: 4 },
+          { dishId: 1, quantity: 6 },
+          { dishId: 2, quantity: 4 },
+        ],
+        numBeltSlots: 12,
+        numSeats: 4,
+        numFreeDocks: 5,
+        timeToEat: 2000,
+        beltSpeed: 1150,
+        timeToLeave: 1500,
+        spawnFrequency: 1000,
+        numQueues: 3,
+        queues: [
+          [
+            { id: 'p1', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p2', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p3', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p4', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+          ],
+          [
+            { id: 'p5', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p6', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p7', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p8', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+          ],
+          [
+            { id: 'p9', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p10', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p11', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p12', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+          ]
+        ]
+      },
+      {
+        id: 'sample-lvl-2',
+        name: '⚡ Speed Run Sprint',
+        numCustomers: 12,
+        numDishTypes: 4,
+        customerDemands: [
+          { dishId: 0, quantity: 3 }, { dishId: 1, quantity: 3 }, { dishId: 2, quantity: 3 }, { dishId: 3, quantity: 3 },
+          { dishId: 0, quantity: 4 }, { dishId: 1, quantity: 4 }, { dishId: 2, quantity: 4 }, { dishId: 3, quantity: 4 },
+          { dishId: 0, quantity: 5 }, { dishId: 1, quantity: 5 }, { dishId: 2, quantity: 5 }, { dishId: 3, quantity: 5 },
+        ],
+        numBeltSlots: 12,
+        numSeats: 6,
+        numFreeDocks: 6,
+        timeToEat: 1500,
+        beltSpeed: 600,
+        timeToLeave: 1000,
+        spawnFrequency: 800,
+        numQueues: 4,
+        queues: [
+          [
+            { id: 'p1', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p2', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p1a', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p2a', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+          ],
+          [
+            { id: 'p3', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p4', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p3a', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p4a', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+          ],
+          [
+            { id: 'p5', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p6', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p5a', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p6a', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+          ],
+          [
+            { id: 'p7', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p8', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p7a', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+            { id: 'p8a', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
+          ],
+        ]
+      }
+    ];
+  });
+
+  const [activeCustomLevel, setActiveCustomLevel] = useState<any | null>(null);
+
+  // TWEAK / SANDBOX SIMULATIVE HELPERS & ACTION HANDLERS
+  const isBeltSlotOccupied = (slotIdx: number) => gameState.beltPlates.some((p) => p.currentSlot === slotIdx);
+
+  // Dynamically computed total target dishes required in real-time
+  const totalPerDish: Record<number, number> = {};
+  for (let i = 0; i < tweakNumCustomers; i++) {
+    const demand = tweakCustomerDemands[i] || { dishId: i % tweakNumDishTypes, quantity: 4 };
+    totalPerDish[demand.dishId] = (totalPerDish[demand.dishId] || 0) + demand.quantity;
+  }
+
+  const handleCompileTweakQueues = () => {
+    const totalRequired: Record<number, number> = {};
+    for (let i = 0; i < tweakNumCustomers; i++) {
+      const d = tweakCustomerDemands[i] || { dishId: i % tweakNumDishTypes, quantity: 4 };
+      totalRequired[d.dishId] = (totalRequired[d.dishId] || 0) + d.quantity;
+    }
+
+    const compiledPlates: any[] = [];
+    for (let dishId = 0; dishId < tweakNumDishTypes; dishId++) {
+      const qty = totalRequired[dishId] || 0;
+      const variety = ALL_VARIETIES[dishId % ALL_VARIETIES.length] as any;
+      for (let j = 0; j < qty; j++) {
+        compiledPlates.push({
+          id: `plate-compiled-${Math.random().toString(36).substring(2, 9)}`,
+          variety,
+          count: 1,
+          injectedSlot: -1,
+          currentSlot: -1,
+          stepsTaken: 0,
+        });
+      }
+    }
+
+    // Divide round-robin across specified number of target queues
+    const qs = Array.from({ length: tweakNumQueues }).map(() => [] as any[]);
+    compiledPlates.forEach((p, idx) => {
+      qs[idx % tweakNumQueues].push(p);
+    });
+
+    setTweakGeneratedQueues(qs);
+    triggerNotification(`Lanes compiled! Total items: ${compiledPlates.length}`);
+  };
+
+  const handleGenerateTweakLevel = () => {
+    // Compile if queues not compiled yet
+    let activeQueues = tweakGeneratedQueues;
+    if (activeQueues.length !== tweakNumQueues || activeQueues.every(q => q.length === 0)) {
+      // auto compile
+      const totalRequired: Record<number, number> = {};
+      for (let i = 0; i < tweakNumCustomers; i++) {
+        const d = tweakCustomerDemands[i] || { dishId: i % tweakNumDishTypes, quantity: 4 };
+        totalRequired[d.dishId] = (totalRequired[d.dishId] || 0) + d.quantity;
+      }
+      const compiledPlates: any[] = [];
+      for (let dishId = 0; dishId < tweakNumDishTypes; dishId++) {
+        const qty = totalRequired[dishId] || 0;
+        const variety = ALL_VARIETIES[dishId % ALL_VARIETIES.length] as any;
+        for (let j = 0; j < qty; j++) {
+          compiledPlates.push({
+            id: `plate-gen-${Math.random().toString(36).substring(2, 9)}`,
+            variety,
+            count: 1,
+            injectedSlot: -1,
+            currentSlot: -1,
+            stepsTaken: 0,
+          });
+        }
+      }
+      const qs = Array.from({ length: tweakNumQueues }).map(() => [] as any[]);
+      compiledPlates.forEach((p, idx) => {
+        qs[idx % tweakNumQueues].push(p);
+      });
+      activeQueues = qs;
+      setTweakGeneratedQueues(qs);
+    }
+
+    const customLevelObj = {
+      id: `custom-lvl-${Date.now()}`,
+      name: `🛠️ CUSTOM LEVEL #${savedLevels.length + 1}`,
+      numCustomers: tweakNumCustomers,
+      numDishTypes: tweakNumDishTypes,
+      customerDemands: tweakCustomerDemands.slice(0, tweakNumCustomers),
+      numBeltSlots: tweakNumBeltSlots,
+      numSeats: tweakNumSeats,
+      numFreeDocks: tweakNumFreeDocks,
+      timeToEat: tweakTimeToEat,
+      beltSpeed: tweakBeltSpeed,
+      timeToLeave: tweakTimeToLeave,
+      spawnFrequency: tweakSpawnFrequency,
+      numQueues: tweakNumQueues,
+      queues: activeQueues,
+    };
+
+    const updatedList = [...savedLevels, customLevelObj];
+    setSavedLevels(updatedList);
+    try {
+      localStorage.setItem('kaizen_saved_levels', JSON.stringify(updatedList));
+    } catch (e) {
+      // ignore
+    }
+    triggerNotification('New Custom Sandbox Level Saved!');
+  };
+
+  const handlePlaySavedLevel = (levelConf: any) => {
+    sfx.playCoinDing();
+    setIsSimPaused(false); // Unpause simulation to run tick state
+    setActiveCustomLevel(levelConf);
+
+    // Generate real level customers templates
+    const levelCustomersTemplates: CustomerOrderTemplate[] = levelConf.customerDemands.slice(0, levelConf.numCustomers).map((item: any, idx: number) => {
+      const variety = ALL_VARIETIES[item.dishId % ALL_VARIETIES.length];
+      const emojiNameOption = CHARACTER_EMOJIS[idx % CHARACTER_EMOJIS.length];
+      return {
+        characterName: emojiNameOption.name,
+        characterEmoji: emojiNameOption.emoji,
+        orderedVariety: variety,
+        orderedCount: item.quantity,
+      };
+    });
+
+    // Populate actual active customer seats
+    const initialCustomers: (Customer | null)[] = Array(levelConf.numSeats).fill(null);
+    for (let s = 0; s < levelConf.numSeats; s++) {
+      if (levelCustomersTemplates.length > s) {
+        const t = levelCustomersTemplates[s];
+        initialCustomers[s] = {
+          id: `cust-${s}-${Math.random().toString(36).substring(2, 7)}`,
+          seatIndex: s,
+          characterName: t.characterName,
+          characterEmoji: t.characterEmoji,
+          orderedVariety: t.orderedVariety,
+          orderedCount: t.orderedCount,
+          satisfiedCount: 0,
+          state: 'arriving', // Stream in!
+          bowlCount: 0,
+          chopstickTicks: 0,
+        };
+      }
+    }
+
+    setGameState({
+      score: 0,
+      coins: 100,
+      level: 1, // level identifier
+      beltPlates: [],
+      freeSlots: Array(levelConf.numFreeDocks).fill(null),
+      hasUnlockedFifthSlot: levelConf.numFreeDocks > 4,
+      queues: JSON.parse(JSON.stringify(levelConf.queues)), // Deep copy generated queues
+      customers: initialCustomers,
+      isGameOver: false,
+      isGameVictory: false,
+      customersServed: 0,
+      totalCustomersRequired: levelCustomersTemplates.length,
+      levelCustomersTemplates: levelCustomersTemplates,
+      nextCustomerIndex: levelCustomersTemplates.length > levelConf.numSeats ? levelConf.numSeats : levelCustomersTemplates.length,
+      beltSpeed: levelConf.beltSpeed,
+    });
+
+    // Save active level config values to state variables so user can tweak them
+    setTweakNumCustomers(levelConf.numCustomers);
+    setTweakNumDishTypes(levelConf.numDishTypes);
+    setTweakNumSeats(levelConf.numSeats);
+    setTweakNumFreeDocks(levelConf.numFreeDocks);
+    setTweakTimeToEat(levelConf.timeToEat);
+    setTweakBeltSpeed(levelConf.beltSpeed);
+    setTweakTimeToLeave(levelConf.timeToLeave);
+    setTweakSpawnFrequency(levelConf.spawnFrequency);
+    setTweakNumQueues(levelConf.numQueues);
+    setTweakGeneratedQueues(levelConf.queues);
+
+    triggerNotification(`Level "${levelConf.name}" Locked & Loaded!`);
+  };
+
+  const [highScore, setHighScore] = useState<number>(() => {
+    try {
+      return parseInt(localStorage.getItem('kaizen_high_score') || '0', 10);
+    } catch {
+      return 0;
+    }
+  });
+
+  // Keep track of high score
+  useEffect(() => {
+    if (gameState.score > highScore) {
+      setHighScore(gameState.score);
+      try {
+        localStorage.setItem('kaizen_high_score', gameState.score.toString());
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [gameState.score, highScore]);
+
+  // Feedback highlights
+  const [beltWarnings, setBeltWarnings] = useState<number[]>([]);
+  const [scoreNotification, setScoreNotification] = useState<{ text: string; id: number } | null>(null);
+
+  // References to handle accurate timing
+  const stateRef = useRef(gameState);
+  stateRef.current = gameState;
+
+  // Sound toggle helper
+  const handleToggleMute = () => {
+    const muted = sfx.toggleMute();
+    setIsMuted(muted);
+  };
+
+  // Trigger floating notifications
+  const triggerNotification = (text: string) => {
+    setScoreNotification({ text, id: Date.now() });
+    setTimeout(() => {
+      setScoreNotification(null);
+    }, 1500);
+  };
+
+  // Initial setup: Spawn new customers
+  useEffect(() => {
+    // Level 1 data is preloaded during initial useState, so this remains idle.
+  }, []);
+
+  // Main conveyor belt loop tick
+  useEffect(() => {
+    if (gameState.isGameOver || levelUpMessage || showTutorial || showAdSpinner || isSimPaused) return;
+
+    const interval = setInterval(() => {
+      tickConveyorBelt();
+    }, gameState.beltSpeed);
+
+    return () => clearInterval(interval);
+  }, [
+    gameState.beltSpeed, 
+    gameState.isGameOver, 
+    levelUpMessage, 
+    showTutorial, 
+    showAdSpinner,
+    isSimPaused
+  ]);
+
+  // Zen Mode speed decay: smoothly recovers original baseline speed
+  useEffect(() => {
+    if (gameMode !== 'zen' || gameState.isGameOver || levelUpMessage || showTutorial || showAdSpinner || isSimPaused) return;
+
+    const interval = setInterval(() => {
+      setGameState((prev) => {
+        const baseSpeed = Math.max(500, 850 - prev.level * 60);
+        if (prev.beltSpeed >= baseSpeed) return prev;
+        
+        // Decay speed back to baseSpeed
+        const nextSpeed = Math.min(baseSpeed, prev.beltSpeed + (baseSpeed - prev.beltSpeed) * 0.12);
+        return {
+          ...prev,
+          beltSpeed: nextSpeed,
+        };
+      });
+    }, 150);
+
+    return () => clearInterval(interval);
+  }, [
+    gameMode,
+    gameState.isGameOver,
+    levelUpMessage,
+    showTutorial,
+    showAdSpinner,
+    isSimPaused
+  ]);
+
+  // Reactive level-up trigger: Fires ONLY when all level diners have been successfully served,
+  // AND the dispatcher queues, rotating belt, and buffer tray slots are completely empty.
+  useEffect(() => {
+    if (gameState.isGameOver || levelUpMessage || showTutorial || showAdSpinner || gameMode === 'menu') return;
+
+    if (gameState.customersServed >= gameState.totalCustomersRequired) {
+      const isBeltEmpty = gameState.beltPlates.length === 0;
+      const isQueuesEmpty = gameState.queues.every((col) => col.length === 0);
+      const isFreeSlotsEmpty = gameState.freeSlots.every((slot) => slot === null);
+
+      if (isBeltEmpty && isQueuesEmpty && isFreeSlotsEmpty) {
+        const timer = setTimeout(() => {
+          if (gameMode === 'tweak') {
+            setIsSimPaused(true);
+            setGameState(prev => ({
+              ...prev,
+              isGameVictory: true,
+            }));
+          } else {
+            triggerLevelUp(gameState.level + 1);
+          }
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [
+    gameState.customersServed,
+    gameState.totalCustomersRequired,
+    gameState.beltPlates,
+    gameState.queues,
+    gameState.freeSlots,
+    gameState.isGameOver,
+    levelUpMessage,
+    showTutorial,
+    showAdSpinner,
+    gameMode,
+    gameState.level,
+  ]);
+
+  // Automatically progress 'arriving' customers to 'waiting' in tweak mode
+  useEffect(() => {
+    if (gameMode !== 'tweak') return;
+    const arrivingSeatIndexes = gameState.customers
+      .map((c, idx) => (c && c.state === 'arriving' ? idx : -1))
+      .filter((idx) => idx !== -1);
+
+    if (arrivingSeatIndexes.length === 0) return;
+
+    const timers = arrivingSeatIndexes.map((seatIndex) => {
+      return setTimeout(() => {
+        handleCustomerArrived(seatIndex);
+      }, 1500);
+    });
+
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+    };
+  }, [gameState.customers, gameMode]);
+
+  // Spawn a new customer at a target seat
+  const spawnCustomer = (seatIndex: number, currentLevel: number): Customer => {
+    const varieties: SushiVariety[] = ['maguro', 'california', 'kappa', 'tamago', 'ebi', 'salmon'];
+    const orderedVariety = varieties[Math.floor(Math.random() * varieties.length)];
+    const orderedCount = 3; // 1 customer wants exactly 3 dishes, with 2s eating delay
+
+    const charChoice = CHARACTER_EMOJIS[Math.floor(Math.random() * CHARACTER_EMOJIS.length)];
+
+    return {
+      id: `cust-${Math.random().toString(36).substring(2, 9)}`,
+      seatIndex,
+      characterName: charChoice.name,
+      characterEmoji: charChoice.emoji,
+      orderedVariety,
+      orderedCount,
+      satisfiedCount: 0,
+      state: 'arriving', // Walks into the restaurant through sliding Shōji doors!
+      bowlCount: 0,
+      chopstickTicks: 0,
+    };
+  };
+
+  // Main ticking logic: moves plates anti-clockwise and resolves overflows/matches
+  const tickConveyorBelt = () => {
+    setLastTickTime(Date.now());
+    setGameState((prev) => {
+      if (prev.isGameOver) return prev;
+
+      // 1. Move plates forward counter-clockwise
+      const updatedPlates: Plate[] = [];
+      const overflowedPlates: Plate[] = [];
+
+      for (const plate of prev.beltPlates) {
+        const nextSteps = plate.stepsTaken + 1;
+        const nextSlot = (plate.currentSlot + 1) % 12;
+
+        if (nextSteps >= 12) {
+          // Plate completed full 360-degree rotation! Pushed off-belt
+          overflowedPlates.push({
+            ...plate,
+            stepsTaken: nextSteps,
+            currentSlot: -1,
+          });
+        } else {
+          updatedPlates.push({
+            ...plate,
+            stepsTaken: nextSteps,
+            currentSlot: nextSlot,
+          });
+        }
+      }
+
+      if (overflowedPlates.length > 0) {
+        setTotal360Rotations(r => r + overflowedPlates.length);
+      }
+
+      // 2. Resolve overflows into the buffer slots
+      let hasFailed = false;
+      const newFreeSlots = [...prev.freeSlots];
+      const maxSlots = prev.freeSlots.length;
+
+      for (const p of overflowedPlates) {
+        // Find left-most available slot inside active array bounds
+        let foundIndex = -1;
+        for (let i = 0; i < maxSlots; i++) {
+          if (newFreeSlots[i] === null) {
+            foundIndex = i;
+            break;
+          }
+        }
+
+        if (foundIndex !== -1) {
+          newFreeSlots[foundIndex] = p;
+          // Play slide alert
+          sfx.playError();
+        } else {
+          // No free slots! Instant fail state!
+          hasFailed = true;
+        }
+      }
+
+      if (hasFailed) {
+        sfx.playGameOver();
+        return {
+          ...prev,
+          beltPlates: [],
+          freeSlots: newFreeSlots,
+          isGameOver: true,
+        };
+      }
+
+      // 3. Resolve customer interceptions in the new positions
+      const newBeltPlates: Plate[] = [];
+      const updatedCustomers = prev.customers.map((c) => {
+        if (!c) return null;
+        return { ...c };
+      });
+
+      // Align seat slots:
+      // Seat 0 [left top] -> Slot 10
+      // Seat 1 [left bottom] -> Slot 11
+      // Seat 2 [right top] -> Slot 5
+      // Seat 3 [right bottom] -> Slot 4
+      const seatSlots = gameMode === 'tweak' ? getSeatSlots(tweakNumSeats) : [10, 11, 5, 4];
+
+      for (const plate of updatedPlates) {
+        let intercepted = false;
+
+        for (let s = 0; s < seatSlots.length; s++) {
+          const targetSlot = seatSlots[s];
+          const customerAtSeat = updatedCustomers[s];
+
+          if (
+            plate.currentSlot === targetSlot &&
+            customerAtSeat &&
+            customerAtSeat.state === 'waiting' &&
+            customerAtSeat.orderedVariety === plate.variety
+          ) {
+            // MATCH FOUND! Pull plate of the belt and feed customer
+            intercepted = true;
+            customerAtSeat.state = 'eating';
+            customerAtSeat.chopstickTicks = plate.count;
+            
+            // Set async trigger to finish feeding after 2 seconds
+            feedCustomerAtSeat(s, plate.count);
+            break;
+          }
+        }
+
+        if (!intercepted) {
+          newBeltPlates.push(plate);
+        }
+      }
+
+      return {
+        ...prev,
+        beltPlates: newBeltPlates,
+        freeSlots: newFreeSlots,
+        customers: updatedCustomers,
+      };
+    });
+  };
+
+  // Handles customer arrival transition to waiting
+  const handleCustomerArrived = (seatIndex: number) => {
+    setGameState((prev) => {
+      const updatedCustomers = prev.customers.map((c, idx) => {
+        if (idx === seatIndex && c && c.state === 'arriving') {
+          return { ...c, state: 'waiting' as const };
+        }
+        return c;
+      });
+      return { ...prev, customers: updatedCustomers };
+    });
+  };
+
+  // Handles feeding tick transitions and customer satisfaction payouts
+  const feedCustomerAtSeat = (seatIndex: number, plateCount: number) => {
+    sfx.playIntercept();
+    
+    // There is EXACTLY a 2 seconds delay of their eating 1 dish
+    const delay = 2000;
+
+    setTimeout(() => {
+      setGameState((prev) => {
+        const updatedCustomers = prev.customers.map((c) => {
+          if (!c) return null;
+          return { ...c };
+        });
+
+        const customer = updatedCustomers[seatIndex];
+        if (!customer || customer.state !== 'eating') return prev;
+
+        // Apply satisfied quantity per plate consumed
+        const nextSatisfied = customer.satisfiedCount + 1;
+
+        customer.satisfiedCount = nextSatisfied;
+        customer.bowlCount += 1; // Spawns an empty plate/bowl
+        customer.chopstickTicks = 0;
+
+        // If entire order is consumed, mark as satisfied and schedule replacement steps
+        if (nextSatisfied >= customer.orderedCount) {
+          customer.state = 'satisfied';
+          sfx.playCustomerSatisfied();
+          
+          // Trigger rewards
+          const earnedCoins = 30; // standard flat diner reward
+          const earnedScore = 150;
+
+          triggerNotification(`+🪙${earnedCoins} Dinner complete!`);
+          
+          // Step 1: Wait 2 seconds while customer is waves happily/jumps
+          setTimeout(() => {
+            setGameState((prev2) => {
+              const leavingCustomers = prev2.customers.map((c2, cIdx) => {
+                if (cIdx === seatIndex && c2) {
+                  return { ...c2, state: 'leaving' as const };
+                }
+                return c2;
+              });
+              return { ...prev2, customers: leavingCustomers };
+            });
+
+            // Step 2: Let them walk outside through shoji door for 1.5 seconds, then vacate seat
+            setTimeout(() => {
+              setGameState((prev3) => {
+                const emptiedCustomers = prev3.customers.map((c3, cIdx) => {
+                  if (cIdx === seatIndex) return null; // seat is vacant, bowl stack vanishes, particle burst emits
+                  return c3;
+                });
+                return { ...prev3, customers: emptiedCustomers };
+              });
+
+              // Step 3: Wait 1 second on empty/clean seat, then spawn a new customer outdoors
+              setTimeout(() => {
+                setGameState((prev4) => {
+                  let nextCustIndex = prev4.nextCustomerIndex;
+                  const spawnedCustomers = prev4.customers.map((c4, cIdx) => {
+                    if (cIdx === seatIndex) {
+                      if (nextCustIndex < prev4.levelCustomersTemplates.length) {
+                        const template = prev4.levelCustomersTemplates[nextCustIndex];
+                        nextCustIndex += 1;
+                        return {
+                          id: `cust-${seatIndex}-${Math.random().toString(36).substring(2, 7)}`,
+                          seatIndex,
+                          characterName: template.characterName,
+                          characterEmoji: template.characterEmoji,
+                          orderedVariety: template.orderedVariety,
+                          orderedCount: template.orderedCount,
+                          satisfiedCount: 0,
+                          state: 'arriving' as const,
+                          bowlCount: 0,
+                          chopstickTicks: 0,
+                        };
+                      }
+                      return null;
+                    }
+                    return c4;
+                  });
+
+                  // Increment global served count for level achievements
+                  const nextServed = prev4.customersServed + 1;
+                  
+                  return {
+                    ...prev4,
+                    customersServed: nextServed,
+                    customers: spawnedCustomers,
+                    nextCustomerIndex: nextCustIndex,
+                  };
+                });
+
+                // Level-up will be reactively triggered by useEffect once the board is fully empty and cleared
+
+              }, 1000);
+
+            }, 1500);
+
+          }, 2000);
+
+          return {
+            ...prev,
+            coins: prev.coins + earnedCoins,
+            score: prev.score + earnedScore,
+            customers: updatedCustomers,
+          };
+        } else {
+          // Go back to waiting for more plates!
+          customer.state = 'waiting';
+          return {
+            ...prev,
+            customers: updatedCustomers,
+          };
+        }
+      });
+    }, delay);
+  };
+
+  // Handles level progression and resets stats
+  const triggerLevelUp = (nextLevel: number) => {
+    sfx.playCoinDing();
+    if (nextLevel > 5) {
+      setGameState((prev) => ({
+        ...prev,
+        isGameVictory: true,
+      }));
+      return;
+    }
+    const speed = Math.max(600, 1150 - nextLevel * 125); // Speeds up belt proportionally
+    setLevelUpMessage(`LEVEL UP! Welcome to level ${nextLevel}`);
+
+    const lData = initializeLevelData(nextLevel);
+
+    setGameState((prev) => ({
+      ...prev,
+      level: nextLevel,
+      customersServed: 0,
+      totalCustomersRequired: lData.totalCustomersRequired,
+      beltPlates: [], // clear belt plates for fresh start
+      freeSlots: Array(5).fill(null), // clear tray buffer items on level up
+      queues: lData.queues,
+      customers: lData.customers,
+      levelCustomersTemplates: lData.levelCustomersTemplates,
+      nextCustomerIndex: lData.nextCustomerIndex,
+      beltSpeed: speed,
+      coins: prev.coins + 50, // level milestone bonus
+    }));
+  };
+
+  const handleNextLevelStart = () => {
+    setLevelUpMessage(null);
+  };
+
+  // Dispatch the frontline item from a dispenser queue
+  const handleDispatchQueue = (queueIdx: number) => {
+    const targetSlotIdx = queueIdx; // Column 0 -> Slot 0, Column 1 -> Slot 1, Column 2 -> Slot 2
+
+    // Check if slot is occupied
+    const occupied = gameState.beltPlates.some((p) => p.currentSlot === targetSlotIdx);
+    if (occupied) {
+      sfx.playError();
+      setBeltWarnings([targetSlotIdx]);
+      setTimeout(() => setBeltWarnings([]), 800);
+      return;
+    }
+
+    sfx.playDispatch();
+
+    setGameState((prev) => {
+      const queueList = prev.queues[queueIdx];
+      if (!queueList || queueList.length === 0) return prev;
+
+      const dispatchedPlate = {
+        ...queueList[0],
+        currentSlot: targetSlotIdx,
+        injectedSlot: targetSlotIdx,
+        stepsTaken: 0,
+        spawnTime: Date.now(),
+      };
+
+      // Shift queue up without adding new elements (finite pieces under Law of System Balance)
+      const updatedColList = queueList.slice(1);
+      const queueOverride = prev.queues.map((col, cIdx) => (cIdx === queueIdx ? updatedColList : col));
+
+      // Check for instant feeding match with customer seats [Seat 0 -> Slot 10, Seat 1 -> Slot 11, Seat 2 -> Slot 5, Seat 3 -> Slot 4]
+      const seatSlots = gameMode === 'tweak' ? getSeatSlots(tweakNumSeats) : [10, 11, 5, 4];
+      const updatedCustomers = prev.customers.map((c) => (c ? { ...c } : null));
+      let isInstantEaten = false;
+
+      for (let s = 0; s < seatSlots.length; s++) {
+        const targetSlot = seatSlots[s];
+        const customerAtSeat = updatedCustomers[s];
+
+        if (
+          targetSlotIdx === targetSlot &&
+          customerAtSeat &&
+          customerAtSeat.state === 'waiting' &&
+          customerAtSeat.orderedVariety === dispatchedPlate.variety
+        ) {
+          isInstantEaten = true;
+          customerAtSeat.state = 'eating';
+          customerAtSeat.chopstickTicks = dispatchedPlate.count;
+          feedCustomerAtSeat(s, dispatchedPlate.count);
+          break;
+        }
+      }
+
+      // If in Zen Mode, reduce beltSpeed (increasing physical velocity/speed and accelerating interval)
+      let nextSpeed = prev.beltSpeed;
+      if (gameMode === 'zen') {
+        nextSpeed = Math.max(240, prev.beltSpeed * 0.72);
+      }
+
+      return {
+        ...prev,
+        queues: queueOverride,
+        beltPlates: isInstantEaten ? prev.beltPlates : [...prev.beltPlates, dispatchedPlate],
+        customers: updatedCustomers,
+        beltSpeed: nextSpeed,
+      };
+    });
+  };
+
+  // Reload an item from the free buffer tray back onto the conveyor belt
+  const handleBufferPlateClick = (plate: Plate, slotIdx: number) => {
+    const returnSlotIdx = 1; // Slot 1 is the return lane (bottom center-left)
+
+    // Verify if return zone is unoccupied
+    const occupied = gameState.beltPlates.some((p) => p.currentSlot === returnSlotIdx);
+    if (occupied) {
+      sfx.playError();
+      setBeltWarnings([returnSlotIdx]);
+      setTimeout(() => setBeltWarnings([]), 800);
+      triggerNotification('Return Slot 1 is occupied!');
+      return;
+    }
+
+    sfx.playDispatch();
+
+    setGameState((prev) => {
+      const newFreeSlots = [...prev.freeSlots];
+      newFreeSlots[slotIdx] = null; // take out of buffer slot
+
+      const returnedPlate = {
+        ...plate,
+        currentSlot: returnSlotIdx,
+        injectedSlot: returnSlotIdx,
+        stepsTaken: 0, // Fresh rotational start
+        spawnTime: Date.now(),
+      };
+
+      let nextSpeed = prev.beltSpeed;
+      if (gameMode === 'zen') {
+        nextSpeed = Math.max(240, prev.beltSpeed * 0.72);
+      }
+
+      return {
+        ...prev,
+        freeSlots: newFreeSlots,
+        beltPlates: [...prev.beltPlates, returnedPlate],
+        beltSpeed: nextSpeed,
+      };
+    });
+  };
+
+  // Buy extra fifth slot via coins
+  const handleBuyFifthSlot = () => {
+    const cost = 80;
+    if (gameState.coins >= cost) {
+      sfx.playCoinDing();
+      setGameState((prev) => ({
+        ...prev,
+        coins: prev.coins - cost,
+        hasUnlockedFifthSlot: true,
+      }));
+      triggerNotification('Buffer Slot 5 Unlocked!');
+    } else {
+      sfx.playError();
+      triggerNotification('Not enough coins! (Need 80)');
+    }
+  };
+
+  // Simulated ad unlock for fifth slot (watch 3s video ad)
+  const handleAdvertiseUnlock = () => {
+    sfx.playCoinDing();
+    setShowAdSpinner(true);
+    setTimeout(() => {
+      setShowAdSpinner(false);
+      setGameState((prev) => ({
+        ...prev,
+        hasUnlockedFifthSlot: true,
+      }));
+      sfx.playCoinDing();
+      triggerNotification('Buffer Slot 5 Unlocked FREE!');
+    }, 3000);
+  };
+
+  // Restart entire gameplay loop
+  const handleRestartGame = () => {
+    sfx.playCoinDing();
+    if (gameMode === 'tweak') {
+      if (activeCustomLevel) {
+        handlePlaySavedLevel(activeCustomLevel);
+        return;
+      } else if (savedLevels.length > 0) {
+        handlePlaySavedLevel(savedLevels[0]);
+        return;
+      }
+    }
+    const lData = initializeLevelData(1);
+    setGameState({
+      score: 0,
+      coins: 100,
+      level: 1,
+      beltPlates: [],
+      freeSlots: Array(5).fill(null),
+      hasUnlockedFifthSlot: false,
+      queues: lData.queues,
+      customers: lData.customers,
+      isGameOver: false,
+      isGameVictory: false,
+      customersServed: 0,
+      totalCustomersRequired: lData.totalCustomersRequired,
+      levelCustomersTemplates: lData.levelCustomersTemplates,
+      nextCustomerIndex: lData.nextCustomerIndex,
+      beltSpeed: 1150,
+    });
+    setLevelUpMessage(null);
+  };
+
+  const handleStartGame = () => {
+    sfx.playCoinDing();
+    setShowTutorial(false);
+    setHasFirstLaunch(true);
+  };
+
+  if (gameMode === 'menu') {
+    return (
+      <MainMenu
+        onSelectMode={(mode) => {
+          setGameMode(mode);
+          handleRestartGame();
+          if (mode === 'zen') {
+            setGameState(prev => ({
+              ...prev,
+              beltSpeed: 850, // Much smoother 2x continuous speed!
+            }));
+          } else {
+            setGameState(prev => ({
+              ...prev,
+              beltSpeed: 1150, // Standard retro speed
+            }));
+          }
+        }}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
+        onShowTutorial={() => setShowTutorial(true)}
+        highScore={highScore}
+      />
+    );
+  }
+
+  return (
+    <div 
+      className={`w-full h-screen max-h-screen flex items-center justify-center p-0 select-none relative font-sans antialiased overflow-hidden transition-all duration-500 ${
+        gameMode === 'zen' ? 'bg-[#edd4b8] text-[#5c3a21]' : (gameMode === 'tweak' ? 'bg-[#030712] text-slate-100 tweak-mode' : 'bg-[#111] text-[#f5f5f0]')
+      }`}
+      style={{
+        height: '100vh',
+        maxHeight: '100vh',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+        padding: 0,
+        margin: 0,
+        ...(gameMode === 'zen'
+          ? {
+              backgroundImage: `
+                radial-gradient(rgba(139, 90, 43, 0.08) 1.5px, transparent 1.5px),
+                linear-gradient(rgba(139, 90, 43, 0.04) 1px, transparent 1px)
+              `,
+              backgroundSize: '24px 24px, 100% 48px',
+            }
+          : {})
+      }}
+    >
+      
+      {/* Dynamic Floating Score Notifications */}
+      <AnimatePresence>
+        {scoreNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute top-20 left-1/2 transform -translate-x-1/2 z-40 bg-[#d94e33] text-[#fafaf9] px-4 py-1.5 rounded-full text-xs font-mono font-bold shadow-lg border border-red-400/20"
+          >
+            {scoreNotification.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Container: Adapts as multi-column on desktop / splits completely for tweak-mode */}
+      {gameMode === 'tweak' ? (
+        <div className="w-full h-full flex flex-row overflow-hidden relative bg-[#030712] text-slate-100 font-mono">
+          
+          {/* LEFT COLUMN - SANDBOX DEVELOPER DASHBOARD */}
+          <div className="w-[440px] h-full shrink-0 bg-[#050811] border-r border-[#152033] flex flex-col justify-between p-4 overflow-y-auto z-20 space-y-4">
+            
+            <div className="space-y-4">
+              {/* Header block */}
+              <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-[13px] font-black tracking-widest text-[#60a5fa] uppercase flex items-center gap-2">
+                    <span>🛠️</span> LEVEL DESIGN STUDIO
+                  </h2>
+                  <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest block mt-0.5">
+                    Simulation Tweak Sandbox v3
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    sfx.playCoinDing();
+                    setGameMode('menu');
+                  }}
+                  className="px-2.5 py-1 text-[9px] bg-slate-900 hover:bg-slate-850 text-slate-300 font-extrabold rounded border border-slate-800 hover:border-slate-700 transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                >
+                  ⛩️ ESCAPE
+                </button>
+              </div>
+
+              {/* Heartbeat Controls & Active Stats */}
+              <div className="bg-[#090f1d] border border-blue-950 p-2.5 rounded-xl space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[8px] text-indigo-400 font-black uppercase tracking-wider">Active HEARTBEAT loop</span>
+                  <span className={`text-[8.5px] font-bold px-1.5 rounded-sm flex items-center gap-1 ${
+                    isSimPaused ? 'bg-amber-950/80 text-amber-400 border border-amber-900/30' : 'bg-emerald-950/80 text-emerald-400 border border-emerald-900/30 animate-pulse'
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
+                    {isSimPaused ? 'PAUSED' : 'SIMULATIVE RUNNING'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      sfx.playDispatch();
+                      setIsSimPaused(!isSimPaused);
+                    }}
+                    className={`flex-1 py-1.5 text-[9px] font-bold uppercase rounded border transition active:scale-95 cursor-pointer ${
+                      isSimPaused
+                        ? 'bg-emerald-900/80 hover:bg-emerald-850 text-emerald-100 border-emerald-700'
+                        : 'bg-amber-900/80 hover:bg-amber-850 text-amber-100 border-amber-700'
+                    }`}
+                  >
+                    {isSimPaused ? '▶️ Resume heartbeat' : '⏸️ Freeze Heartbeat'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      sfx.playDispatch();
+                      handleRestartGame();
+                    }}
+                    className="px-3 py-1.5 text-[9px] font-bold bg-slate-900 hover:bg-slate-850 text-slate-300 rounded border border-slate-800 transition active:scale-95 cursor-pointer uppercase"
+                  >
+                    🔄 Clear Machine
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[8px] text-slate-400 pt-1 border-t border-slate-900">
+                  <div>Served: <span className="text-white font-bold">{gameState.customersServed}/{gameState.totalCustomersRequired}</span></div>
+                  <div>Plates on conveyor: <span className="text-white font-bold">{gameState.beltPlates.length}</span></div>
+                </div>
+              </div>
+
+              {/* -------------------- STEP 1: SETUP STATE INPUTS -------------------- */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-sky-400 font-black tracking-widest uppercase block border-l-2 border-sky-500 pl-1.5">
+                  Step 1: Setup State Parameters
+                </span>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <label className="flex flex-col text-[8.5px] text-slate-400 font-bold uppercase">
+                    Customers count
+                    <input 
+                      type="number" 
+                      min={1} 
+                      max={24} 
+                      value={tweakNumCustomers} 
+                      onChange={(e) => {
+                        const val = Math.max(1, Math.min(24, parseInt(e.target.value) || 1));
+                        setTweakNumCustomers(val);
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 focus:border-blue-500 hover:border-slate-700 rounded p-1.5 text-xs text-white outline-none"
+                    />
+                  </label>
+                  <label className="flex flex-col text-[8.5px] text-slate-400 font-bold uppercase">
+                    Dish Varieties (max 9)
+                    <input 
+                      type="number" 
+                      min={1} 
+                      max={9} 
+                      value={tweakNumDishTypes} 
+                      onChange={(e) => {
+                        const val = Math.max(1, Math.min(9, parseInt(e.target.value) || 1));
+                        setTweakNumDishTypes(val);
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 focus:border-blue-500 hover:border-slate-700 rounded p-1.5 text-xs text-white outline-none"
+                    />
+                  </label>
+                </div>
+
+                {/* Customer Demand Custom Array row mappings */}
+                <div className="border border-slate-900 bg-[#04060b]/80 p-2.5 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between text-[8px] text-slate-500 font-bold uppercase pb-1 border-b border-slate-900">
+                    <span>🧑 Customer Slot Demand Map</span>
+                    <span className="text-amber-400">Total Items Sum: {Object.values(totalPerDish).reduce((a, b) => a + b, 0)}</span>
+                  </div>
+                  
+                  <div className="max-h-36 overflow-y-auto space-y-1 pr-1 border-b border-slate-900/50 pb-1">
+                    {Array.from({ length: tweakNumCustomers }).map((_, i) => {
+                      const demand = tweakCustomerDemands[i] || { dishId: 0, quantity: 4 };
+                      const charEmoji = CHARACTER_EMOJIS[i % CHARACTER_EMOJIS.length].emoji;
+                      return (
+                        <div key={i} className="flex items-center justify-between bg-slate-950/60 p-1 rounded border border-slate-900/60 text-[9px]">
+                          <span className="font-bold flex items-center gap-1">
+                            <span>{charEmoji}</span> #{i + 1}:
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-500">Dish ID:</span>
+                            <select 
+                              value={demand.dishId} 
+                              onChange={(e) => {
+                                const newId = parseInt(e.target.value) || 0;
+                                setTweakCustomerDemands(prev => {
+                                  const copy = [...prev];
+                                  if (!copy[i]) copy[i] = { dishId: 0, quantity: 4 };
+                                  copy[i].dishId = newId;
+                                  return copy;
+                                });
+                              }}
+                              className="bg-slate-900 text-slate-200 border border-slate-800 text-[8px] py-0.5 px-1 rounded outline-none"
+                            >
+                              {Array.from({ length: tweakNumDishTypes }).map((_, dIdx) => (
+                                <option key={dIdx} value={dIdx}>
+                                  D0{dIdx} ({ALL_VARIETIES[dIdx % ALL_VARIETIES.length]})
+                                </option>
+                              ))}
+                            </select>
+                            <span className="text-slate-500">Qty:</span>
+                            <input 
+                              type="number"
+                              min={1}
+                              max={15}
+                              value={demand.quantity}
+                              onChange={(e) => {
+                                const newQty = Math.max(1, Math.min(15, parseInt(e.target.value) || 1));
+                                setTweakCustomerDemands(prev => {
+                                  const copy = [...prev];
+                                  if (!copy[i]) copy[i] = { dishId: 0, quantity: 4 };
+                                  copy[i].quantity = newQty;
+                                  return copy;
+                                });
+                              }}
+                              className="w-10 text-center bg-slate-900 text-white border border-slate-800 text-[8px] py-0.5 rounded outline-none"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <label className="flex flex-col text-[8.5px] text-slate-400 font-bold uppercase">
+                    Dining Seats Count (2-8)
+                    <input 
+                      type="number" 
+                      min={2} 
+                      max={8} 
+                      value={tweakNumSeats} 
+                      onChange={(e) => {
+                        const val = Math.max(2, Math.min(8, parseInt(e.target.value) || 4));
+                        setTweakNumSeats(val);
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 focus:border-blue-500 hover:border-slate-700 rounded p-1.5 text-xs text-white outline-none"
+                    />
+                  </label>
+                  <label className="flex flex-col text-[8.5px] text-slate-400 font-bold uppercase">
+                    Buffer Docks capacity (4-6)
+                    <select 
+                      value={tweakNumFreeDocks} 
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 5;
+                        setTweakNumFreeDocks(val);
+                        setDockCrashThreshold(val);
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 focus:border-blue-500 hover:border-slate-700 rounded p-1.5 text-xs text-white outline-none"
+                    >
+                      <option value={4}>4 Slots</option>
+                      <option value={5}>5 Slots</option>
+                      <option value={6}>6 Slots</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              {/* -------------------- STEP 2: TIMING & PACING SPEEDS -------------------- */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] text-amber-500 font-black tracking-widest uppercase block border-l-2 border-amber-500 pl-1.5">
+                  Step 2: Timing & Pacing Speeds
+                </span>
+
+                <div className="grid grid-cols-2 gap-2 text-[8.5px] text-slate-400 font-bold uppercase">
+                  <label className="flex flex-col">
+                    Time to Eat (ms)
+                    <input 
+                      type="number" 
+                      min={500} 
+                      max={10000} 
+                      step={100}
+                      value={tweakTimeToEat}
+                      onChange={(e) => {
+                        const val = Math.max(500, Math.min(10000, parseInt(e.target.value) || 2000));
+                        setTweakTimeToEat(val);
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 rounded p-1 text-xs text-white outline-none font-mono"
+                    />
+                  </label>
+                  <label className="flex flex-col">
+                    Conveyor step (ms)
+                    <input 
+                      type="number" 
+                      min={100} 
+                      max={5000} 
+                      step={50}
+                      value={tweakBeltSpeed}
+                      onChange={(e) => {
+                        const val = Math.max(100, Math.min(5000, parseInt(e.target.value) || 1150));
+                        setTweakBeltSpeed(val);
+                        setGameState(p => ({ ...p, beltSpeed: val }));
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 rounded p-1 text-xs text-white outline-none font-mono"
+                    />
+                  </label>
+                  <label className="flex flex-col mt-1">
+                    Time to Leave (ms)
+                    <input 
+                      type="number" 
+                      min={100} 
+                      max={10000} 
+                      step={100}
+                      value={tweakTimeToLeave}
+                      onChange={(e) => {
+                        const val = Math.max(100, Math.min(10000, parseInt(e.target.value) || 1500));
+                        setTweakTimeToLeave(val);
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 rounded p-1 text-xs text-white outline-none font-mono"
+                    />
+                  </label>
+                  <label className="flex flex-col mt-1">
+                    Spawn Frequency (ms)
+                    <input 
+                      type="number" 
+                      min={100} 
+                      max={10000} 
+                      step={100}
+                      value={tweakSpawnFrequency}
+                      onChange={(e) => {
+                        const val = Math.max(100, Math.min(10000, parseInt(e.target.value) || 1000));
+                        setTweakSpawnFrequency(val);
+                      }}
+                      className="mt-1 bg-slate-950 border border-slate-800 rounded p-1 text-xs text-white outline-none font-mono"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* -------------------- PIPELINE GENERATION CONTROLS -------------------- */}
+              <div className="space-y-2 pt-2 border-t border-slate-900">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-emerald-400 font-black tracking-widest uppercase block">
+                    Pipeline Compile Channels
+                  </span>
+                  <label className="text-[8px] flex items-center gap-1 text-slate-400">
+                    Split Queues:
+                    <select 
+                      value={tweakNumQueues} 
+                      onChange={(e) => setTweakNumQueues(Math.max(3, Math.min(6, parseInt(e.target.value) || 3)))}
+                      className="bg-slate-950 font-bold text-white border border-slate-800 px-1 py-0.5 rounded text-[8.5px]"
+                    >
+                      <option value={3}>3 Channels</option>
+                      <option value={4}>4 Channels</option>
+                      <option value={5}>5 Channels</option>
+                      <option value={6}>6 Channels</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleCompileTweakQueues}
+                    className="py-2 px-1 bg-indigo-900/60 hover:bg-indigo-900 border border-indigo-700/50 text-[10px] font-bold text-indigo-100 rounded-xl transition active:scale-95 cursor-pointer uppercase text-center flex items-center justify-center gap-1"
+                  >
+                    ⛓️ 1. Compile Queues
+                  </button>
+                  <button
+                    onClick={handleGenerateTweakLevel}
+                    className="py-2 px-1 bg-teal-900/60 hover:bg-teal-900 border border-teal-700/50 text-[10px] font-bold text-teal-100 rounded-xl transition active:scale-95 cursor-pointer uppercase text-center flex items-center justify-center gap-1"
+                  >
+                    💾 2. Save Sandbox
+                  </button>
+                </div>
+
+                {/* Read-Only Telemetry Preview of Compiled Queues */}
+                {tweakGeneratedQueues.length > 0 && (
+                  <div className="bg-[#03060a]/90 border border-slate-905 p-2 rounded-lg space-y-1.5 text-[8.5px] text-slate-400" id="tweak-telemetry-preview">
+                    <span className="text-[#60a5fa] font-black uppercase text-[7.5px] block">Compiled Telemetry Distribution Pipeline</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {tweakGeneratedQueues.map((col, idx) => (
+                        <div key={idx} className="bg-slate-950 border border-slate-900 p-1 rounded flex items-center justify-between">
+                          <span>Lane #{idx + 1}:</span>
+                          <span className="font-bold text-white">{col.length} plates ({col.map(p => p.variety === 'maguro' ? '🍣' : (p.variety === 'california' ? '🍥' : '🥒')).slice(0,3).join('')}...)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Saved Sandbox Levels List */}
+            <div className="pt-2 border-t border-slate-800 space-y-1.5">
+              <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider block">Compiled Level Library</span>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                {savedLevels.map((lvl) => (
+                  <div key={lvl.id} className="bg-[#030810] border border-slate-800 rounded-xl p-2 flex items-center justify-between text-[9px] hover:border-slate-700 transition">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-black text-white truncate max-w-[210px]">{lvl.name}</span>
+                      <span className="text-slate-500 text-[8px] uppercase tracking-tighter">
+                        {lvl.numCustomers} diners • {lvl.numSeats} seats • {lvl.numFreeDocks} docks • {lvl.numQueues} tracks
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handlePlaySavedLevel(lvl)}
+                      className="px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[9px] font-black rounded-lg shadow transition active:scale-90 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      🎮 PLAY
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN - CENTERED VIEWPORT CANVAS CONTAINER (Fits 1080x1080 nicely with zero scrollbar!) */}
+          <div className="flex-1 h-full bg-[#02050a] flex items-center justify-center p-3 relative overflow-hidden" id="sandbox-viewport">
+            
+            {/* Aspect Square Card mirroring perfect landscape-constrained layout */}
+            <div 
+              className="w-full max-w-[min(calc(100vh-64px),720px)] aspect-square bg-[#070b13] border-[3px] border-[#131d2f] rounded-[24px] relative shadow-2xl flex flex-col justify-between p-4 my-auto mx-auto"
+              style={{
+                boxSizing: 'border-box',
+              }}
+            >
+              {/* TOP HEADER: Status node bar */}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-emerald-500 text-xs animate-ping">●</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#60a5fa] bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                    SYS: SIMULATOR ACTIVE
+                  </span>
+                </div>
+                <div className="text-[9px] font-mono text-slate-400 font-bold uppercase flex items-center gap-2">
+                  <span>Score: <span className="text-emerald-400 font-extrabold">{gameState.score}</span></span>
+                  <span>Coins: <span className="text-amber-400 font-extrabold">🪙{gameState.coins}</span></span>
+                </div>
+              </div>
+
+              {/* OUTDOORS Single entry door node at top center */}
+              <div className="absolute top-[8%] left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center">
+                <div className="bg-[#0f172a] border-2 border-[#1e293b] rounded-2xl px-3 py-1 text-center shadow-lg flex items-center gap-2 relative">
+                  <span className="text-xl">🚪</span>
+                  <div>
+                    <span className="text-[6.5px] text-slate-500 font-bold block uppercase tracking-wider">ENTRY DOOR</span>
+                    <span className="text-[8px] text-emerald-400 font-black tracking-tight leading-none">QUEUE FLOW</span>
+                  </div>
+                  {/* Streaming waiting lines circles indicators */}
+                  <div className="flex gap-1 ml-2 pl-2 border-l border-slate-800 items-center">
+                    {gameState.levelCustomersTemplates.slice(gameState.nextCustomerIndex, gameState.nextCustomerIndex + 6).map((c, idx) => (
+                      <span key={idx} className="text-sm filter drop-shadow relative animate-pulse" title={c.characterName}>
+                        {c.characterEmoji}
+                      </span>
+                    ))}
+                    {gameState.levelCustomersTemplates.length <= gameState.nextCustomerIndex && (
+                      <span className="text-[7px] text-slate-600 font-bold uppercase">EMPTY</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* MAIN CONTENT AREA: Conveyor, Plates and Seats */}
+              <div className="flex-1 relative w-full h-[60%] my-auto flex items-center justify-center">
+                
+                {/* Conveyor Belt Loop in precise central aspect */}
+                <div className="w-[50%] h-[40%] absolute" style={{ left: '25%', top: '30%' }}>
+                  <ConveyorBelt 
+                    plates={gameState.beltPlates}
+                    highlightedSlots={beltWarnings}
+                    lastTickTime={lastTickTime}
+                    beltSpeed={gameState.beltSpeed}
+                    variant="tweak"
+                  />
+                </div>
+
+                {/* Dinner seats placed with 100% dynamic absolute coordinate offsets alongside coordinates */}
+                {getSeatSlots(tweakNumSeats).map((slotIdx, seatIndex) => {
+                  const customer = gameState.customers[seatIndex];
+                  
+                  // Fetch global relative percentage coordinate of slotIdx on conveyor belt track box
+                  const slotCoord = SLOT_COORDS[slotIdx as keyof typeof SLOT_COORDS] || { x: 50, y: 50 };
+                  const globalX = 25 + (slotCoord.x * 0.5);
+                  const globalY = 30 + (slotCoord.y * 0.4);
+
+                  let leftPercent = globalX;
+                  let topPercent = globalY;
+
+                  // Place offset around belt sides
+                  if (slotIdx === 9 || slotIdx === 10 || slotIdx === 11) {
+                    leftPercent = globalX - 13;
+                    topPercent = globalY;
+                  } else if (slotIdx === 4 || slotIdx === 5 || slotIdx === 6) {
+                    leftPercent = globalX + 13;
+                    topPercent = globalY;
+                  } else if (slotIdx === 7 || slotIdx === 8) {
+                    leftPercent = globalX;
+                    topPercent = globalY - 14;
+                  } else {
+                    leftPercent = globalX;
+                    topPercent = globalY + 14;
+                  }
+
+                  return (
+                    <div 
+                      key={seatIndex}
+                      className="absolute flex flex-col items-center select-none z-10"
+                      style={{
+                        left: `${leftPercent}%`,
+                        top: `${topPercent}%`,
+                        transform: 'translate(-50%, -50%)',
+                        width: '85px',
+                      }}
+                    >
+                      {customer ? (
+                        <div className="bg-[#0c1222] border border-slate-700 rounded-xl p-1 text-center w-full shadow-lg flex flex-col items-center relative gap-[1px]">
+                          {/* Character Name & Status */}
+                          <span className="text-[7px] text-[#60a5fa] font-mono leading-none font-bold uppercase truncate max-w-[70px]">
+                            {customer.characterName}
+                          </span>
+
+                          {/* Customer Emoji */}
+                          <span className="text-xl filter drop-shadow leading-none py-0.5">
+                            {customer.characterEmoji}
+                          </span>
+
+                          {/* Bubble Order */}
+                          <div className="bg-[#050811] border border-slate-800 rounded px-1 py-0.5 flex items-center justify-center gap-1 scale-90">
+                            <span className="text-xs leading-none">
+                              {customer.orderedVariety === 'maguro' && '🍣'}
+                              {customer.orderedVariety === 'california' && '🍥'}
+                              {customer.orderedVariety === 'kappa' && '🥒'}
+                              {customer.orderedVariety === 'tamago' && '🍳'}
+                              {customer.orderedVariety === 'ebi' && '🍤'}
+                              {customer.orderedVariety === 'salmon' && '🐟'}
+                              {customer.orderedVariety === 'unagi' && '🐍'}
+                              {customer.orderedVariety === 'ikura' && '🔴'}
+                              {customer.orderedVariety === 'saba' && '◽'}
+                            </span>
+                            <span className="text-[7.5px] font-bold font-mono text-white leading-none">
+                              {customer.satisfiedCount}/{customer.orderedCount}
+                            </span>
+                          </div>
+
+                          {/* Chewing Progress Bar */}
+                          {customer.state === 'eating' && (
+                            <div className="w-full h-[3px] bg-slate-950 rounded overflow-hidden mt-0.5">
+                              <div 
+                                className="h-full bg-emerald-500 transition-all duration-300"
+                                style={{ width: `${(customer.chopstickTicks / 8) * 100}%` }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Bubble status tag */}
+                          <span className={`text-[5.5px] font-mono uppercase tracking-widest leading-none px-0.5 py-[1px] rounded mt-0.5 ${
+                            customer.state === 'eating' 
+                              ? 'bg-amber-950/80 text-amber-300' 
+                              : customer.state === 'satisfied'
+                              ? 'bg-emerald-950 text-emerald-300 animate-bounce'
+                              : 'bg-slate-900 text-slate-500'
+                          }`}>
+                            {customer.state}
+                          </span>
+
+                          {/* Plat Stack empty bowls */}
+                          {customer.bowlCount > 0 && (
+                            <div className="absolute -right-2 bottom-1.5 flex flex-col gap-[1px]">
+                              {Array.from({ length: customer.bowlCount }).map((_, bIdx) => (
+                                <div key={bIdx} className="w-2.5 h-[3px] bg-[#d94e33] rounded-t-sm" />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-[#04070d]/50 border border-dashed border-slate-800/60 rounded-xl p-1.5 text-center w-full flex flex-col items-center justify-center opacity-30">
+                          <span className="text-sm">🪑</span>
+                          <span className="text-[5.5px] text-slate-500 font-mono font-extrabold mt-0.5 uppercase tracking-wider">
+                            VACANT_0{seatIndex}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+              </div>
+
+              {/* BOTTOM PANEL CONTROLS: Storage Buffer tray + Dispatch input tracks lanes */}
+              <div className="space-y-2 mt-auto">
+                {/* Dynamically configured Free Buffer tray storage docks (4, 5, or 6 deep) */}
+                <div className="px-2">
+                  <FreeBuffer 
+                    freeSlots={gameState.freeSlots}
+                    hasUnlockedFifthSlot={true}
+                    onBufferPlateClick={handleBufferPlateClick}
+                    onUnlockSlot={() => {}}
+                    coinCostToUnlock={0}
+                    playerCoins={gameState.coins}
+                    variant="tweak"
+                    dockCrashThreshold={tweakNumFreeDocks}
+                  />
+                </div>
+
+                {/* Dispatch Input Tracks Queues Lanes (3 to 6 pipeline queues deep) */}
+                <div className="px-2">
+                  <QueueDispenser 
+                    queues={gameState.queues}
+                    onDispatch={handleDispatchQueue}
+                    isBeltSlotOccupied={isBeltSlotOccupied}
+                    variant="tweak"
+                  />
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      ) : (
+        <div 
+          className={`w-full max-w-5xl h-auto xl:h-[762px] flex flex-col xl:flex-row overflow-hidden shadow-2xl transition-all duration-500 ${
+            gameMode === 'zen' 
+              ? 'bg-[#fffcf8] xl:border-[8px] xl:border-[#8a5a36] xl:rounded-[36px]' 
+              : 'bg-[#141414] xl:border xl:border-[#2d2d2d] xl:rounded-3xl'
+          }`}
+        >
+        {/* DEVELOPER MONITOR AND INSPECTOR PANEL (Left Column - 400px width) */}
+        <div
+          id="developer-inspector"
+          style={{ display: gameMode === 'tweak' ? 'flex' : 'none' }}
+          className="w-[400px] h-full shrink-0 bg-[#060a12] border-r border-[#192437] flex flex-col justify-between p-4 font-mono select-none overflow-y-auto text-slate-300 relative z-20"
+        >
+          <div className="space-y-4">
+            {/* Dashboard Title Header */}
+            <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl animate-pulse">⚙️</span>
+                <div>
+                  <h2 className="text-xs font-black tracking-wider text-teal-400 select-none leading-none">
+                    TWEAK_PROT_v3.2
+                  </h2>
+                  <span className="text-[7.5px] uppercase tracking-widest text-[#475569] font-extrabold block mt-0.5">
+                    Node & Circle Calibrator
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setGameMode('menu');
+                  setIsSimPaused(false);
+                }}
+                className="px-1.5 py-1 text-[8px] bg-slate-900 border border-slate-700 hover:bg-slate-850 text-slate-300 rounded font-bold uppercase transition cursor-pointer"
+              >
+                ⛩️ BACK_TO_MENU
+              </button>
+            </div>
+
+            {/* GLOBAL CLOCK TRACKER & TELEMETRY */}
+            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5">
+              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
+                SYS STATUS & METRICS
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-1.5 text-[9px]">
+                <div className="bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
+                  <span className="text-[6.5px] text-slate-500 block uppercase font-bold">STATE</span>
+                  <span className={`font-black uppercase tracking-wider ${isSimPaused ? 'text-amber-500 animate-pulse' : 'text-emerald-400'}`}>
+                    ● {isSimPaused ? 'PAUSED' : 'RUNNING_OP'}
+                  </span>
+                </div>
+                <div className="bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
+                  <span className="text-[6.5px] text-slate-500 block uppercase font-bold">SATISFIED</span>
+                  <span className="font-extrabold text-[#fafaf9]">
+                    {gameState.customersServed} CLIENTS
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 1: CUSTOMER WAITING FORECAST */}
+            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5">
+              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
+                SECTION_1: LOBBY INCOMING QUEUE
+              </h3>
+              <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded text-[9.5px]">
+                <span className="text-slate-400 uppercase text-[8px]">Queue length count</span>
+                <span className="font-mono font-black text-sky-400 bg-sky-950/40 border border-sky-900/50 px-1.5 py-0.5 rounded text-[9px]">
+                  {gameState.levelCustomersTemplates.length - gameState.nextCustomerIndex} INCOMING
+                </span>
+              </div>
+            </div>
+
+            {/* SECTION 2: CONVEYOR GRID & BUFFER OCCUPANCY */}
+            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5 text-slate-300">
+              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
+                SECTION_2: CONVEYOR OVERSEER
+              </h3>
+              <div className="space-y-1 text-[9px]">
+                <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
+                  <span className="uppercase text-slate-400 text-[8px]">Slots occupancy</span>
+                  <span className="font-bold text-[#fafaf9]">
+                    {gameState.beltPlates.length} / 12 FILLED
+                  </span>
+                </div>
+                <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
+                  <span className="uppercase text-slate-400 text-[8px]">Total rotation loops (360°)</span>
+                  <span className="font-mono font-black text-teal-400">
+                    {total360Rotations} COMPLETE
+                  </span>
+                </div>
+                <div className="flex justify-between items-center bg-[#070a14] border border-slate-900/60 p-1.5 rounded">
+                  <span className="uppercase text-slate-400 text-[8px]">Tray buffer load</span>
+                  <span className={`font-bold ${gameState.freeSlots.filter(s => s !== null).length >= dockCrashThreshold - 1 ? 'text-rose-500 animate-pulse' : 'text-emerald-400'}`}>
+                    {gameState.freeSlots.filter(s => s !== null).length} / {dockCrashThreshold} SLOTS
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 3: DEEP-PIPELINE TRACKS */}
+            <div className="bg-[#0a0f1d] border border-slate-800/80 rounded-lg p-2.5 space-y-1.5">
+              <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/40 pb-0.5">
+                SECTION_3: INPUT TRACK MONITORS
+              </h3>
+              <div className="grid grid-cols-3 gap-1.5 text-[9px]">
+                <div className="bg-[#070a14] border border-slate-900/60 p-1 rounded flex flex-col items-center">
+                  <span className="text-[6.5px] text-slate-500 uppercase font-black">Track 0</span>
+                  <span className="font-bold text-indigo-400 mt-0.5">{gameState.queues[0]?.length || 0} nodes</span>
+                </div>
+                <div className="bg-[#070a14] border border-slate-900/60 p-1 rounded flex flex-col items-center">
+                  <span className="text-[6.5px] text-slate-500 uppercase font-black">Track 1</span>
+                  <span className="font-bold text-indigo-400 mt-0.5">{gameState.queues[1]?.length || 0} nodes</span>
+                </div>
+                <div className="bg-[#070a14] border border-slate-900/60 p-1 rounded flex flex-col items-center">
+                  <span className="text-[6.5px] text-slate-500 uppercase font-black">Track 2</span>
+                  <span className="font-bold text-indigo-400 mt-0.5">{gameState.queues[2]?.length || 0} nodes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* OPERATIONS CONTROL BASEBOARD */}
+          <div className="mt-2 border-t border-slate-800 pt-2.5 space-y-2.5 text-slate-300">
+            <h3 className="text-[8px] font-black text-teal-400 uppercase tracking-wider block">
+              🛰️ CALIBRATOR CORE
+            </h3>
+
+            {/* SIM HEARTBEAT TOGGLE BUTTON */}
+            <div className="space-y-0.5">
+              <span className="text-[7px] text-slate-400 uppercase font-bold block">Heartbeat control (Active Cycle)</span>
+              <button
+                 onClick={() => {
+                   sfx.playCoinDing();
+                   setIsSimPaused(!isSimPaused);
+                 }}
+                 className={`w-full py-1 text-[9px] font-mono uppercase font-black rounded border cursor-pointer select-none transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                   isSimPaused
+                     ? 'bg-amber-950/80 border-amber-500 text-amber-400 hover:bg-amber-900/90 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                     : 'bg-emerald-950/80 border-emerald-500 text-emerald-400 hover:bg-emerald-900/90 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
+                  }`}
+              >
+                <span>{isSimPaused ? '▶️ RESUME HEARTBEAT' : '⏸️ PAUSE HEARTBEAT'}</span>
+              </button>
+            </div>
+
+            {/* LOOP SPEED SLIDER */}
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-[7.5px] uppercase tracking-wider text-slate-400 font-bold">
+                <span>Calibration Tick delay</span>
+                <span className="font-mono text-teal-400 font-black">{gameState.beltSpeed}ms</span>
+              </div>
+              <input
+                type="range"
+                min="200"
+                max="2000"
+                step="50"
+                value={gameState.beltSpeed}
+                onChange={(e) => {
+                  const spd = parseInt(e.target.value, 10);
+                  setGameState(prev => ({ ...prev, beltSpeed: spd }));
+                }}
+                className="w-full accent-teal-500 h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="flex justify-between text-[6.5px] text-[#475569] uppercase font-bold">
+                <span>Rapid (200ms)</span>
+                <span>Sluggish (2000ms)</span>
+              </div>
+            </div>
+
+            {/* DOCK CRASH THRESHOLD CONTROLLER */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-[7.5px] uppercase tracking-wider text-slate-400 font-bold col-span-2">
+                <span>Buffer Dock Crash Limit</span>
+                <span className="font-mono text-rose-400 font-black">{dockCrashThreshold} SLOTS</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => {
+                    sfx.playDispatch();
+                    setDockCrashThreshold(t => Math.max(1, t - 1));
+                  }}
+                  className="py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-rose-500 hover:text-rose-400 font-bold uppercase tracking-widest text-[8.5px] cursor-pointer"
+                >
+                  - DECREASE
+                </button>
+                <button
+                  onClick={() => {
+                    sfx.playDispatch();
+                    setDockCrashThreshold(t => Math.min(12, t + 1));
+                  }}
+                  className="py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-emerald-500 hover:text-emerald-400 font-bold uppercase tracking-widest text-[8.5px] cursor-pointer"
+                >
+                  + INCREASE
+                </button>
+              </div>
+              <span className="text-[6.5px] text-[#475569] uppercase font-bold text-center block">
+                Adjusts the fail state threshold dynamically on the fly
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* LEFT SIDEBAR: Static game metadata of Kaizen restaraunt */}
+        <aside 
+          style={{ display: gameMode === 'tweak' ? 'none' : undefined }}
+          className={`w-72 flex flex-col justify-between hidden xl:flex shrink-0 transition-all duration-500 ${
+            gameMode === 'zen' 
+              ? 'border-r-2 border-[#b5835a]/30 bg-[#faf2e9]' 
+              : 'border-r border-[#2d2d2d] bg-[#141414]'
+          }`}
+        >
+          <div className={`p-6 flex flex-col justify-end h-28 shrink-0 border-b transition-all duration-500 ${
+            gameMode === 'zen' 
+              ? 'bg-[#8a5a36] border-[#724624]/60' 
+              : 'bg-[#d94e33] border-stone-900'
+          }`}>
+            <span className="text-[10px] font-mono tracking-[0.2em] uppercase opacity-85 text-[#fafaf9]">
+              RESTORATION MASTER
+            </span>
+            <h1 className="text-2xl font-serif italic tracking-wide font-black text-[#fafaf9] leading-tight">
+              KAIZEN ZUSHI
+            </h1>
+          </div>
+
+          <div className="p-6 flex-1 flex flex-col justify-between space-y-6">
+            <div className="space-y-6">
+              <div>
+                <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                  Current Station
+                </span>
+                <h2 className={`text-xl font-serif italic mt-1 font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-[#d94e33]'}`}>
+                  {gameMode === 'zen' ? 'Zen Pond Garden' : `Rush Hour (Lvl.${gameState.level})`}
+                </h2>
+              </div>
+
+              <div>
+                <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                  PATRON SATISFACTION
+                </span>
+                <div className={`flex justify-between items-baseline mt-1 text-xs font-mono ${gameMode === 'zen' ? 'text-[#5c3a21]' : 'text-stone-300'}`}>
+                  <span>Diners Served</span>
+                  <span className={`font-bold ${gameMode === 'zen' ? 'text-stone-950 font-extrabold' : 'text-white'}`}>
+                    {gameState.customersServed}/{gameState.totalCustomersRequired}
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className={`h-1 rounded-full overflow-hidden mt-2 ${gameMode === 'zen' ? 'bg-[#eedbc5]/60' : 'bg-stone-900'}`}>
+                  <div 
+                    className={`h-full transition-all duration-400 ${gameMode === 'zen' ? 'bg-[#8a5a36]' : 'bg-[#d94e33]'}`}
+                    style={{ width: `${(gameState.customersServed / gameState.totalCustomersRequired) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic rule boards */}
+              <div className={`p-4 rounded-xl text-[10px] font-mono space-y-1.5 leading-relaxed border ${
+                gameMode === 'zen' 
+                  ? 'bg-[#fcf5ee] border-[#b5835a]/30 text-[#8a5a36] font-bold shadow-xs' 
+                  : 'bg-[#1a1a1a] border border-[#2d2d2d] text-stone-400'
+              }`}>
+                <span className="text-[9px] text-[#fafaf9]/30 uppercase tracking-widest block font-bold">
+                  Tactical Notes:
+                </span>
+                <p>• Launch matching color ingredients onto empty bottom slots.</p>
+                <p>• Belt revolves Counter-Clockwise.</p>
+                <p>• Serve stacks to seated customers cleanly.</p>
+                <p>• Reload plates in Leftover Buffer before grid overflows!</p>
+              </div>
+            </div>
+
+            <div className="text-[9px] font-mono text-stone-600">
+              © 2026 KAIZEN CORP.
+            </div>
+          </div>
+        </aside>
+
+        {/* MIDDLE PORTRAITS WRAPPER: Mobile and Desktop primary action panel */}
+        <section className={`flex-1 w-full max-w-2xl mx-auto xl:w-[720px] xl:max-w-none p-4 flex flex-col justify-between h-full relative transition-all duration-500 ${
+          gameMode === 'tweak'
+            ? 'bg-[#030712] overflow-hidden border-r border-[#192437]'
+            : 'overflow-y-auto xl:border-r xl:border-stone-800 bg-[#121212]'
+        } ${
+          gameMode === 'zen' ? 'bg-gradient-to-b from-[#fdf6ec] to-[#f4e6d3]' : ''
+        }`}>
+          
+          {/* MOBILE ONLY COMPACT HEADER PANEL */}
+          <header className={`flex justify-between items-center p-2.5 rounded-2xl shadow-md xl:hidden mb-2 transition-all duration-300 ${
+            gameMode === 'zen' 
+              ? 'bg-[#faf2e9] border border-[#ddb892]/60 text-[#3e1f0a]' 
+              : 'bg-[#141414] border border-[#2c2c2c] text-[#f5f5f0]'
+          }`}>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl">🍣</span>
+              <div>
+                <h1 className={`text-xs font-serif font-black italic tracking-wide leading-none ${
+                  gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-[#d94e33]'
+                }`}>
+                  Kaizen Zushi
+                </h1>
+                <span className={`text-[8px] font-mono uppercase tracking-wider ${
+                  gameMode === 'zen' ? 'text-[#a07855]' : 'text-stone-500'
+                }`}>
+                  {gameMode === 'zen' ? 'Zen Garden' : `Station Rush ${gameState.level}`}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {/* Menu Escape Hatch */}
+              <button
+                onClick={() => setGameMode('menu')}
+                className={`px-2 py-0.5 rounded text-[8px] font-mono font-bold tracking-tight uppercase cursor-pointer transition-all ${
+                  gameMode === 'zen' 
+                    ? 'bg-[#8a5a36] text-white hover:bg-[#724624]' 
+                    : 'bg-[#d94e33] text-white hover:bg-[#b03a24]'
+                }`}
+              >
+                ⛩️ Menu
+              </button>
+              {/* Coins */}
+              <div className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold ${
+                gameMode === 'zen' ? 'bg-[#f0d8c0] text-[#a07855]' : 'bg-[#121212] text-amber-500'
+              }`}>
+                🪙{gameState.coins}
+              </div>
+              {/* Score */}
+              <div className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold ${
+                gameMode === 'zen' ? 'bg-[#f0d8c0] text-[#8a5a36]' : 'bg-[#121212] text-[#d94e33]'
+              }`}>
+                Pts: {gameState.score}
+              </div>
+
+              {/* Sound Option */}
+              <button
+                onClick={handleToggleMute}
+                className="p-1 hover:bg-stone-800/10 rounded cursor-pointer"
+              >
+                {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-500" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-600" />}
+              </button>
+            </div>
+          </header>
+
+          {/* DESKTOP ONLY SMALL TOP TOOLBAR */}
+          <header className={`hidden xl:flex justify-between items-center p-2 rounded-2xl shadow-md mb-2 transition-all duration-300 ${
+            gameMode === 'zen' 
+              ? 'bg-[#faf2e9] border border-[#ddb892]/60 text-[#3e1f0a]' 
+              : 'bg-[#1a1a1a] border border-[#2c2c2c] text-[#fafaf9]'
+          }`}>
+            <span className={`text-[9px] font-mono tracking-wider ${gameMode === 'zen' ? 'text-[#8a5a36] font-bold' : 'text-stone-500'}`}>
+              {gameMode === 'zen' ? '🌸 ZEN POND DINING GARDEN' : 'CORE WORKSTATION SCREEN'}
+            </span>
+            <div className="flex items-center gap-1.5">
+              {/* Menu Escape Hatch */}
+              <button
+                onClick={() => setGameMode('menu')}
+                className={`px-2 py-1 rounded text-[8px] font-mono font-bold tracking-wider uppercase cursor-pointer transition-all flex items-center gap-1 ${
+                  gameMode === 'zen' 
+                    ? 'bg-[#8a5a36] hover:bg-[#724624] text-white' 
+                    : 'bg-[#d94e33] hover:bg-[#b03a24] text-[#fafaf9]'
+                }`}
+              >
+                <span>⛩️</span> CHANGE WINDOW MODE
+              </button>
+              <div className="w-[1px] h-3 bg-[#b5835a]/30 mx-1" />
+              {/* Audio button */}
+              <button
+                id="btn-toggle-sound"
+                onClick={handleToggleMute}
+                className="p-1 rounded transition cursor-pointer"
+                title="Toggle SFX synth"
+              >
+                {isMuted ? <VolumeX className="w-3.5 h-3.5 text-[#d94e33]" /> : <Volume2 className="w-3.5 h-3.5 text-stone-400" />}
+              </button>
+              {/* Help trigger */}
+              <button
+                id="btn-show-help"
+                onClick={() => setShowTutorial(true)}
+                className="p-1 rounded transition text-stone-400 hover:text-stone-600 cursor-pointer"
+                title="Open instruction panel"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </header>
+
+          {/* PLAYGROUND MIDDLE LAYERS */}
+          <div className="flex-1 flex flex-col justify-start gap-4">
+            
+            {/* PREDICTIVE CUSTOMER DEMAND FORECAST BAR */}
+            <div className={`w-full flex flex-col justify-center select-none px-4 py-2 rounded-2xl border transition-all duration-500 relative shadow-sm ${
+              gameMode === 'zen'
+                ? 'bg-[#faefe0] border-[#ddb892]/40 text-[#8a5a36]'
+                : 'bg-[#191919] border-[#2c2c2c] text-stone-400'
+            }`}>
+              <div className="flex justify-between items-center mb-1">
+                <span className={`text-[8px] font-mono font-black tracking-wider uppercase ${
+                  gameMode === 'zen' ? 'text-[#8a5a36]/75' : 'text-stone-500'
+                }`}>
+                  🔮 Upcoming Demand Forecast (Predict Next Move)
+                </span>
+                <span className={`text-[8px] font-mono ${
+                  gameMode === 'zen' ? 'text-[#8a5a36]/60' : 'text-stone-500'
+                }`}>
+                  Diners remaining: {gameState.levelCustomersTemplates.length - gameState.nextCustomerIndex}
+                </span>
+              </div>
+
+              <div className="flex gap-3 items-center justify-start overflow-x-auto no-scrollbar py-0.5 min-h-[36px]">
+                {gameState.levelCustomersTemplates.slice(gameState.nextCustomerIndex, gameState.nextCustomerIndex + 4).length > 0 ? (
+                  gameState.levelCustomersTemplates.slice(gameState.nextCustomerIndex, gameState.nextCustomerIndex + 4).map((tmpl, idx) => {
+                    const varietyConfig = SUSHI_VARIETIES[tmpl.orderedVariety];
+                    const color = varietyConfig?.colorCode || '#ef4444';
+                    return (
+                      <motion.div
+                        key={`upcoming-${idx}-${tmpl.characterName}`}
+                        initial={{ opacity: 0, x: 15 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={`flex items-center gap-2 px-2.5 py-1 rounded-xl text-xs font-serif ${
+                          gameMode === 'zen'
+                            ? 'bg-[#fcf5ee] border border-[#e6ccb2]/45 text-stone-900 font-bold'
+                            : 'bg-[#121212] border border-stone-800 text-[#fafaf9]'
+                        }`}
+                      >
+                        <span className="text-base leading-none select-none filter drop-shadow">{tmpl.characterEmoji}</span>
+                        <div className="flex flex-col text-left leading-none justify-center">
+                          <span className={`text-[8px] font-mono font-bold leading-none ${
+                            gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-400'
+                          }`}>
+                            {tmpl.characterName}
+                          </span>
+                          <div className="flex items-center gap-1 mt-0.5 leading-none">
+                            <span 
+                              className="w-1.5 h-1.5 rounded-full inline-block shrink-0 animate-pulse" 
+                              style={{ backgroundColor: color }} 
+                              title={varietyConfig?.displayName}
+                            />
+                            <span className="text-[9px] font-mono leading-none font-bold" style={{ color: color }}>
+                              {varietyConfig?.displayName} × {tmpl.orderedCount}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Small forecast position ticker */}
+                        <span className="text-[7px] font-mono text-stone-500 bg-stone-900/10 dark:bg-stone-100/10 px-1 py-0.5 rounded-md self-center">
+                          #{gameState.nextCustomerIndex + idx + 1}
+                        </span>
+                      </motion.div>
+                    );
+                  })
+                ) : gameState.customersServed >= gameState.totalCustomersRequired ? (
+                  <div className={`text-[10.5px] font-mono tracking-wide w-full text-center py-2 italic font-black animate-pulse flex items-center justify-center gap-1.5 ${
+                    gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-emerald-400'
+                  }`}>
+                    🧹 STATION CLEARING: Empty all bottom lanes and clear the rotating belt to proceed!
+                  </div>
+                ) : (
+                  <div className="text-[10px] font-mono tracking-wide text-stone-500 w-full text-center py-2 italic">
+                    🎉 All level diners have been seated! Satisfy the remaining customers to clear the station.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SINGLE UNIFIED DOORWAY ENTRY SYSTEM */}
+            <div id="unified-central-entry-rail" className={`w-full flex flex-col items-center mb-1 select-none overflow-visible rounded-2xl relative border p-2.5 transition-all duration-300 ${
+              gameMode === 'zen'
+                ? 'bg-[#faefe0]/80 border-[#edd2b6]/40 shadow-inner'
+                : 'bg-[#181818] border-stone-850 shadow-md'
+            }`}>
+              <div className="flex w-full items-center justify-between gap-1 relative overflow-visible">
+                {/* IN SLIDERS */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`text-[8px] font-mono font-black px-1.5 py-0.5 rounded-full select-none leading-none ${
+                    gameMode === 'zen' ? 'bg-[#e2f0d9] text-[#2c581c]' : 'bg-emerald-950 text-emerald-400'
+                  }`}>
+                    IN
+                  </span>
+                  {/* Sliding panel box representation */}
+                  <div className="w-14 h-8 bg-[#fbf6eb] border border-[#b5835a]/60 dark:border-stone-700/60 rounded flex items-center justify-center relative overflow-hidden shadow-sm">
+                    {/* Grid texture inside sliding panel */}
+                    <div className="absolute inset-0 opacity-20" style={{
+                      backgroundImage: 'repeating-linear-gradient(0, transparent, transparent 3px, #5c3a21 3px, #5c3a21 4px), repeating-linear-gradient(90deg, transparent, transparent 3px, #5c3a21 3px, #5c3a21 4px)'
+                    }} />
+                    {/* Sliding door panels moving open if we have active arrivals */}
+                    <motion.div 
+                      animate={gameState.customers.some(c => c && c.state === 'arriving') ? { x: -22 } : { x: 0 }}
+                      className="absolute inset-y-0 left-0 w-1/2 bg-[#fcf5ee] border-r border-[#edd2b6]"
+                    />
+                    <motion.div 
+                      animate={gameState.customers.some(c => c && c.state === 'arriving') ? { x: 22 } : { x: 0 }}
+                      className="absolute inset-y-0 right-0 w-1/2 bg-[#fcf5ee] border-l border-[#edd2b6]"
+                    />
+                    <span className="text-[10px] z-10 filter drop-shadow scale-110">⛩️</span>
+                  </div>
+                </div>
+
+                {/* Queue line: cute chibi heads of waiting customers */}
+                <div id="doorway-queue-visualizer" className="flex-1 flex justify-center items-center gap-1 overflow-x-auto no-scrollbar mx-2 min-h-[30px] rounded-lg p-0.5 bg-[#edd2b6]/10">
+                  <AnimatePresence>
+                    {gameState.levelCustomersTemplates.slice(gameState.nextCustomerIndex).length > 0 ? (
+                      gameState.levelCustomersTemplates.slice(gameState.nextCustomerIndex, gameState.nextCustomerIndex + 7).map((tmpl, idx) => (
+                        <motion.div
+                          key={`doorway-queue-${idx}-${tmpl.characterEmoji}`}
+                          initial={{ opacity: 0, scale: 0.2, y: 15 }}
+                          animate={{ opacity: 0.85, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.2 }}
+                          transition={{ type: 'spring', damping: 10, stiffness: 120 }}
+                          className="w-5 h-5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xs filter drop-shadow hover:scale-110 select-none cursor-help"
+                          title={tmpl.characterName}
+                        >
+                          {tmpl.characterEmoji}
+                        </motion.div>
+                      ))
+                    ) : (
+                      <span className="text-[7.5px] font-mono text-stone-500 italic uppercase tracking-wider animate-pulse">
+                        All Level Diners Seated! 🎐
+                      </span>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* OUT SLIDERS */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="w-14 h-8 bg-[#fbf6eb] border border-[#b5835a]/60 dark:border-stone-700/60 rounded flex items-center justify-center relative overflow-hidden shadow-sm">
+                    {/* Grid texture inside sliding panel */}
+                    <div className="absolute inset-0 opacity-20" style={{
+                      backgroundImage: 'repeating-linear-gradient(0, transparent, transparent 3px, #5c3a21 3px, #5c3a21 4px), repeating-linear-gradient(90deg, transparent, transparent 3px, #5c3a21 3px, #5c3a21 4px)'
+                    }} />
+                    {/* Sliding door panels moving open if we have active departures */}
+                    <motion.div 
+                      animate={gameState.customers.some(c => c && c.state === 'leaving') ? { x: -22 } : { x: 0 }}
+                      className="absolute inset-y-0 left-0 w-1/2 bg-[#fcf5ee] border-r border-[#edd2b6]"
+                    />
+                    <motion.div 
+                      animate={gameState.customers.some(c => c && c.state === 'leaving') ? { x: 22 } : { x: 0 }}
+                      className="absolute inset-y-0 right-0 w-1/2 bg-[#fcf5ee] border-l border-[#edd2b6]"
+                    />
+                    <span className="text-[10px] z-10 filter drop-shadow scale-110">⛩️</span>
+                  </div>
+                  <span className={`text-[8px] font-mono font-black px-1.5 py-0.5 rounded-full select-none leading-none ${
+                    gameMode === 'zen' ? 'bg-[#f0d4d4] text-[#711e1e]' : 'bg-rose-950 text-rose-400'
+                  }`}>
+                    OUT
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* THE CONVEYOR & DINERS LAYOUT (Left seat, Conveyor, Right seat) */}
+            <div id="diners-conveyor-wrapper" className={`flex items-center justify-between gap-1 w-full relative overflow-visible transition-colors duration-500 ${
+              gameMode === 'zen' 
+                ? 'bg-transparent border-none p-0' 
+                : 'bg-[#141414] p-3.5 border border-stone-850 shadow-lg rounded-2xl'
+            }`}>
+              
+
+
+              {/* Left Seats */}
+              <div id="left-seat-frame" className="flex flex-col gap-1 items-center z-10 overflow-visible w-16 shrink-0">
+                <CustomerSeat 
+                  customer={gameState.customers[0]} 
+                  seatIndex={0} 
+                  side="left" 
+                  onArrived={handleCustomerArrived}
+                  variant={gameMode}
+                />
+                <CustomerSeat 
+                  customer={gameState.customers[1]} 
+                  seatIndex={1} 
+                  side="left" 
+                  onArrived={handleCustomerArrived}
+                  variant={gameMode}
+                />
+              </div>
+
+              {/* Conveyor Belt in center */}
+              <div id="conveyor-belt-frame" className={`overflow-visible transition-all duration-500 flex-[3] ${
+                gameMode === 'zen' ? 'max-w-[560px] w-full' : 'max-w-[420px] w-full'
+              }`}>
+                <ConveyorBelt
+                  plates={gameState.beltPlates}
+                  highlightedSlots={beltWarnings}
+                  lastTickTime={lastTickTime}
+                  beltSpeed={gameState.beltSpeed}
+                  onPlateClick={(p) => sfx.playError()}
+                  onBeltTap={() => {
+                    sfx.playDispatch();
+                    setGameState((prev) => {
+                      const newSpeed = Math.max(240, prev.beltSpeed * 0.72);
+                      return {
+                        ...prev,
+                        beltSpeed: newSpeed,
+                      };
+                    });
+                  }}
+                  variant={gameMode}
+                />
+              </div>
+
+              {/* Right Seats */}
+              <div id="right-seat-frame" className="flex flex-col gap-1 items-center z-10 overflow-visible w-16 shrink-0">
+                <CustomerSeat 
+                  customer={gameState.customers[2]} 
+                  seatIndex={2} 
+                  side="right" 
+                  onArrived={handleCustomerArrived}
+                  variant={gameMode}
+                />
+                <CustomerSeat 
+                  customer={gameState.customers[3]} 
+                  seatIndex={3} 
+                  side="right" 
+                  onArrived={handleCustomerArrived}
+                  variant={gameMode}
+                />
+              </div>
+
+            </div>
+
+            {/* BUFFER STORAGE TRAY */}
+            <FreeBuffer
+              freeSlots={gameState.freeSlots}
+              hasUnlockedFifthSlot={gameState.hasUnlockedFifthSlot}
+              onBufferPlateClick={handleBufferPlateClick}
+              onUnlockSlot={() => {
+                if (gameState.coins >= 80) {
+                  handleBuyFifthSlot();
+                } else {
+                  handleAdvertiseUnlock();
+                }
+              }}
+              coinCostToUnlock={80}
+              playerCoins={gameState.coins}
+              variant={gameMode}
+            />
+
+            {/* INGREDIENT QUEUES */}
+            <QueueDispenser
+              queues={gameState.queues}
+              onDispatch={handleDispatchQueue}
+              isBeltSlotOccupied={(slotIdx) => gameState.beltPlates.some((p) => p.currentSlot === slotIdx)}
+              variant={gameMode}
+              activeCustomerVarieties={gameState.customers.filter((c) => c && c.state === 'waiting').map((c) => c!.orderedVariety)}
+            />
+          </div>
+
+          {/* MOBILE ONLY SMALL FOOTER */}
+          <footer className="mt-2.5 p-2 bg-[#141414] border border-[#2c2c2c] rounded-2xl flex justify-between items-center xl:hidden text-stone-400">
+            <div className="text-left font-mono text-[9px]">
+              <div>Served: {gameState.customersServed}/{gameState.totalCustomersRequired}</div>
+              <div className="w-16 h-1 bg-stone-900 rounded-full mt-0.5 overflow-hidden">
+                <div 
+                  className="h-full bg-[#d94e33]"
+                  style={{ width: `${(gameState.customersServed / gameState.totalCustomersRequired) * 100}%` }}
+                />
+              </div>
+            </div>
+            
+            <button
+              onClick={handleRestartGame}
+              className="py-1 px-2.5 bg-[#1a1a1a] hover:bg-[#222] border border-stone-800 text-[10px] font-mono text-[#d94e33] font-bold rounded-lg transition"
+            >
+              Restart
+            </button>
+          </footer>
+
+        </section>
+
+        {/* RIGHT SIDEBAR: Primary statistics and shop upgrades */}
+        <aside 
+          style={{ display: gameMode === 'tweak' ? 'none' : undefined }}
+          className={`w-72 p-6 flex flex-col justify-between hidden xl:flex shrink-0 transition-all duration-500 ${
+            gameMode === 'zen' 
+              ? 'border-l-2 border-[#b5835a]/30 bg-[#faf2e9]' 
+              : 'bg-[#141414] border-l border-[#2d2d2d]'
+          }`}
+        >
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                Session Score
+              </span>
+              <div className={`text-4xl font-serif italic tracking-wider leading-none font-bold ${gameMode === 'zen' ? 'text-stone-900 font-black' : 'text-[#fafaf9]'}`}>
+                {gameState.score}
+              </div>
+              <span className={`text-[9px] font-mono uppercase tracking-wide block font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-[#d94e33]'}`}>
+                RESTORATION STREAK
+              </span>
+            </div>
+
+            <div className={`space-y-1.5 pt-4 border-t ${gameMode === 'zen' ? 'border-[#b5835a]/20' : 'border-[#222]'}`}>
+              <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                Collected Tips
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-2xl font-mono font-black text-amber-500">
+                  🪙{gameState.coins}
+                </span>
+              </div>
+            </div>
+
+            {/* Upgrades panel in dark custom flat wrapper */}
+            <div className={`rounded-2xl p-4 space-y-2.5 border ${
+              gameMode === 'zen' 
+                ? 'bg-[#fcf5ee] border-[#b5835a]/30' 
+                : 'bg-[#191919] border border-[#2d2d2d]'
+            }`}>
+              <span className={`text-[9px] font-mono tracking-[0.1em] uppercase block font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                TRAY REINFORCEMENT
+              </span>
+              <p className={`text-[11px] font-mono leading-relaxed ${gameMode === 'zen' ? 'text-[#8a5a36]/80 font-bold' : 'text-stone-400'}`}>
+                Unlock the 5th Backup Storage tray slot to prevent immediate buffer overflow as speeds accelerate.
+              </p>
+              {gameState.hasUnlockedFifthSlot ? (
+                <div className={`text-[10px] font-mono flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg border ${
+                  gameMode === 'zen' 
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold' 
+                    : 'bg-[#121c16] border-emerald-900/30 text-emerald-400'
+                }`}>
+                  ✓ Double Buffer Armed!
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5 pt-1">
+                  <button
+                    onClick={handleBuyFifthSlot}
+                    className={`py-1.5 text-[#fafaf9] text-xs font-mono font-bold rounded-lg transition shadow-md cursor-pointer ${
+                      gameMode === 'zen' ? 'bg-[#8a5a36] hover:bg-[#724624]' : 'bg-[#d94e33] hover:bg-[#c2422b]'
+                    }`}
+                  >
+                    Pay tips (🪙80)
+                  </button>
+                  <button
+                    onClick={handleAdvertiseUnlock}
+                    className={`py-1 text-[10px] font-mono rounded-lg transition border cursor-pointer ${
+                      gameMode === 'zen' 
+                        ? 'bg-transparent text-[#8a5a36] border-[#b5835a]/45 hover:bg-[#b5835a]/10' 
+                        : 'bg-[#1a1a1a] text-stone-400 border border-stone-800 hover:bg-[#222]'
+                    }`}
+                  >
+                    Quick sponsor video ad
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={`space-y-3 pt-4 border-t ${gameMode === 'zen' ? 'border-[#b5835a]/20' : 'border-[#222]'}`}>
+            <button
+              onClick={handleRestartGame}
+              className={`w-full py-2 text-xs font-mono rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer uppercase font-bold border ${
+                gameMode === 'zen' 
+                  ? 'bg-amber-100 hover:bg-amber-200 text-[#8a5a36] border-[#b5835a]/30' 
+                  : 'bg-[#1c1c1c] hover:bg-[#222] text-stone-400 border border-[#2d2d2d]'
+              }`}
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-[#d94e33]'}`} />
+              Restart Machine
+            </button>
+          </div>
+        </aside>
+
+      </div>
+      )}
+
+      {/* OVERLAY: Sponsor Ad Viewer */}
+      {showAdSpinner && (
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="text-center max-w-xs bg-[#191919] border border-[#2d2d2d] p-6 rounded-3xl shadow-2xl flex flex-col items-center">
+            <span className="text-4xl animate-bounce mb-3">📺</span>
+            <h3 className="text-xs font-serif italic text-[#d94e33] uppercase tracking-wider mb-1 font-bold text-lg">
+              Sponsor Broadcast
+            </h3>
+            <p className="text-[10px] text-stone-400 font-mono mb-4 leading-normal">
+              "Master Chef Sushi Academy lessons are now open! Learn secret recipes from Tokyo master chefs..."
+            </p>
+            {/* Minimalist flat custom spinner */}
+            <div className="w-10 h-10 border-2 border-stone-850 border-t-[#d94e33] rounded-full animate-spin mb-4" />
+            <span className="text-[9px] text-[#fafaf9]/30 font-mono uppercase tracking-widest">
+              Arming 5th Buffer Slot in 3s...
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* OVERLAY: Level milestone completed */}
+      {levelUpMessage && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-xs z-45 flex items-center justify-center p-6">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-[#1a1a1a] border border-[#2d2d2d] p-6 rounded-3xl text-center max-w-xs shadow-2xl flex flex-col items-center"
+          >
+            <div className="text-4xl mb-3 animate-pulse">🎉</div>
+            <h2 className="text-xl font-serif italic text-[#fafaf9] tracking-wide font-bold">
+              Level Completed!
+            </h2>
+            <p className="text-[11px] text-[#fafaf9]/60 font-mono mt-1.5">
+              The kitchen speed has accelerated! 🍣
+            </p>
+            <div className="bg-[#121c16] px-4 py-2 border border-emerald-950/40 rounded-xl my-4 flex items-center gap-2">
+              <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                Tips Reward: +🪙50 Bonus
+              </span>
+            </div>
+            <button
+              id="btn-next-level"
+              onClick={handleNextLevelStart}
+              className="w-full py-2.5 bg-[#d94e33] hover:bg-[#c2422b] text-[#fafaf9] font-black font-mono text-xs rounded-xl shadow-md transition-transform flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              Start Level {gameState.level}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* OVERLAY: Grand Game Victory (Beat Level 5) */}
+      {gameState.isGameVictory && (
+        <div className="absolute inset-0 bg-black/95 backdrop-blur-md z-45 flex items-center justify-center p-6">
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-[#1a1c18] border-2 border-emerald-500/50 p-8 rounded-[32px] text-center max-w-sm shadow-2xl flex flex-col items-center"
+          >
+            <div className="text-5xl mb-4 animate-bounce">🏆👑🍣</div>
+            <h2 className="text-2xl font-serif italic text-emerald-400 font-extrabold tracking-wide uppercase leading-tight">
+              Victory!
+            </h2>
+            <h3 className="text-sm font-serif italic text-[#fafaf9] mt-1 font-bold">
+              Kaizen Grand Master Chef
+            </h3>
+            <p className="text-[11px] text-[#fafaf9]/75 mt-2.5 font-mono leading-relaxed">
+              Incredible! You have successfully cleared all 5 challenge levels in perfect balance under the Law of System Balance. Not a single plate went wasted!
+            </p>
+
+            {/* Score statistics dashboard */}
+            <div className="w-full bg-[#121412] border border-[#2d2f2d] p-4 rounded-2xl my-5 text-left grid grid-cols-2 gap-3 text-xs font-mono">
+              <div>
+                <span className="text-stone-500 block text-[8px] uppercase tracking-wider">Final Score</span>
+                <span className="text-emerald-300 font-black text-sm">{gameState.score} pts</span>
+              </div>
+              <div>
+                <span className="text-stone-500 block text-[8px] uppercase tracking-wider font-bold">Tips Collected</span>
+                <span className="font-black text-amber-400 text-sm">🪙{gameState.coins}</span>
+              </div>
+            </div>
+
+            <button
+              id="btn-victory-restart"
+              onClick={() => {
+                sfx.playCoinDing();
+                handleRestartGame();
+              }}
+              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black font-mono text-xs rounded-xl shadow-lg transition-transform flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              PLAY AGAIN & RETAIN SKILLS
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* OVERLAY: Game Over Buffer Overflow */}
+      {gameState.isGameOver && (
+        <div className="absolute inset-0 bg-black/90 backdrop-blur-sm z-45 flex items-center justify-center p-6">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-[#1a1a1a] border border-[#d94e33]/50 p-6 rounded-3xl text-center max-w-xs shadow-2xl flex flex-col items-center"
+          >
+            <div className="text-4xl mb-2">💥</div>
+            <h2 className="text-lg font-serif italic text-[#d94e33] font-bold uppercase">
+              Buffer Overflow!
+            </h2>
+            <p className="text-[11px] text-[#fafaf9]/60 mt-1 font-mono leading-relaxed">
+              Too many plates bypassed customers and filled the buffer tray. The restoration loop stopped!
+            </p>
+
+            {/* Score stats */}
+            <div className="w-full bg-[#121212] border border-[#2d2d2d] p-3.5 rounded-2xl my-4 text-left grid grid-cols-2 gap-2 text-[11px] font-mono">
+              <div>
+                <span className="text-stone-500 block text-[8px] uppercase tracking-wide">High score</span>
+                <span className="text-white font-bold">{gameState.score} pts</span>
+              </div>
+              <div>
+                <span className="text-stone-500 block text-[8px] uppercase tracking-wide">Last Station</span>
+                <span className="font-bold text-white">LV.{gameState.level}</span>
+              </div>
+            </div>
+
+            <button
+              id="btn-play-again"
+              onClick={handleRestartGame}
+              className="w-full py-2.5 bg-[#d94e33] hover:bg-[#c2422b] text-[#fafaf9] font-bold font-mono text-xs rounded-xl shadow-md transition-transform flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              PLAY AGAIN
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* OVERLAY: Interactive step-by-step tutorial board */}
+      {showTutorial && (
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-45 flex items-center justify-center p-5">
+          <motion.div
+            initial={{ scale: 0.92, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-[#1a1a1a] border border-[#2d2d2d] p-5 rounded-3xl text-left max-w-sm shadow-2xl flex flex-col max-h-[85vh] overflow-y-auto"
+          >
+            <div className="text-center">
+              <span className="text-4xl">🍣</span>
+              <h2 className="text-xl font-serif italic text-[#fafaf9] font-bold tracking-wide mt-2">
+                Kaizen Zushi Restaurant
+              </h2>
+              <span className="text-[9px] font-mono text-stone-500 uppercase tracking-widest block mt-0.5">
+                Pattern Conveyor Game Guide
+              </span>
+            </div>
+
+            {/* Sushi index */}
+            <div className="my-4 bg-[#121212] p-3 rounded-2xl border border-stone-850">
+              <h3 className="text-[10px] font-mono font-bold text-[#d94e33] uppercase tracking-widest mb-2.5">
+                VARIETY SHAPES & OUTLINES
+              </h3>
+              <div className="space-y-2.5 text-[10px] font-mono text-stone-300">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-[#f7f4eb] border border-amber-900 flex items-center justify-center text-xs">🔴</div>
+                  <div>
+                    <span className="font-bold text-[#fafaf9]">Tuna (Maguro):</span> Cream Circle plate. Sleek Oval Slice.
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded bg-[#e6c280] border border-amber-800 flex items-center justify-center text-xs">🟠</div>
+                  <div>
+                    <span className="font-bold text-[#fafaf9]">Calif. Roll:</span> Tan Square plate. Textured Outer Rim.
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-[#134e4a] border border-emerald-950 flex items-center justify-center text-xs">🟢</div>
+                  <div>
+                    <span className="font-bold text-[#fafaf9]">Cucumber (Kappa):</span> Dark Emerald plate. Crisp White Ring.
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 bg-[#8b5a2b] border border-yellow-800 rounded-sm flex items-center justify-center overflow-hidden"><div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[13px] border-b-yellow-400" /></div>
+                  <div>
+                    <span className="font-bold text-[#fafaf9]">Egg (Tamago):</span> Wood Triangle plate. Seaweed Staple.
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-[#1e3a8a] border border-blue-900 flex items-center justify-center text-xs">🦐</div>
+                  <div>
+                    <span className="font-bold text-[#fafaf9]">Shrimp (Ebi):</span> Ocean Blue Circle. Pointed Tail Fan.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Layout parameters */}
+            <div className="space-y-2 text-[10px] text-stone-400 font-mono leading-relaxed">
+              <span className="font-bold text-[#d94e33] uppercase block tracking-wider">How to Play:</span>
+              <p>
+                1. <span className="text-[#fafaf9] font-bold">Tap Kitchen Columns:</span> Launch sushi into bottom lanes of the rotating anti-clockwise conveyor belt.
+              </p>
+              <p>
+                2. <span className="text-[#fafaf9] font-bold">Interception:</span> Seated diners automatically take matching plates when they pass by!
+              </p>
+              <p>
+                3. <span className="text-[#fafaf9] font-bold">Avoid Overflow:</span> Plates that complete a 360° turn drop to the Leftover Buffer. Keep it empty to avoid game overflow!
+              </p>
+            </div>
+
+            <button
+              id="btn-tutorial-start"
+              onClick={handleStartGame}
+              className="mt-4 w-full py-2.5 bg-[#d94e33] hover:bg-[#c2422b] text-[#fafaf9] font-bold font-mono text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 fill-current text-[#fafaf9]" />
+              {hasFirstLaunch ? 'RESUME GAME' : 'START PLAYING'}
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+    </div>
+  );
+}

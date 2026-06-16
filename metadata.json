@@ -1,0 +1,6 @@
+{
+  "name": "Kaizen Zushi",
+  "description": "A tactical hyper-casual puzzle game with rotating conveyor belts, dynamic customer sushi orders, and resource management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
