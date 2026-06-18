@@ -203,19 +203,35 @@ export const CustomerSeat: React.FC<CustomerSeatProps> = ({
             />
 
             <div className="flex items-center gap-1">
-              <span className="text-[8px] font-extrabold font-mono text-indigo-400">
-                {Math.max(0, remainingCount)}x
-              </span>
-              <SushiPlate
-                variety={customer.orderedVariety}
-                count={1}
-                size={16}
-                active={false}
-                variant={variant}
-              />
+              {variant === 'zen' ? (
+                <>
+                  <span
+                    className="w-2 h-2 rounded-full inline-block shrink-0"
+                    style={{ backgroundColor: desiredSushi.colorCode }}
+                  />
+                  <span className="text-[8px] font-extrabold font-mono text-[#8a5a36]">
+                    {Math.max(0, remainingCount)}x {desiredSushi.displayName}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <SushiPlate
+                    variety={customer.orderedVariety}
+                    count={1}
+                    size={variant === 'tweak' ? 18 : 16}
+                    active={false}
+                    variant={variant}
+                  />
+                  <span className={`text-[8px] font-extrabold font-mono ${variant === 'tweak' ? 'text-indigo-300' : 'text-indigo-400'}`}>
+                    {variant === 'tweak'
+                      ? `${customer.satisfiedCount}/${customer.orderedCount}`
+                      : `${Math.max(0, remainingCount)}x`}
+                  </span>
+                </>
+              )}
             </div>
             <span className={`text-[7px] font-mono tracking-tight leading-none uppercase truncate w-full text-center mt-0.5 ${textColour}`}>
-              {desiredSushi.displayName}
+              {variant === 'tweak' ? customer.characterName : (variant === 'zen' ? customer.characterName : desiredSushi.displayName)}
             </span>
           </motion.div>
         )}
@@ -265,7 +281,7 @@ export const CustomerSeat: React.FC<CustomerSeatProps> = ({
 
               {/* Chibi Character container */}
               {variant === 'tweak' ? (
-                <div className="w-[54px] h-[70px] bg-[#111827] border border-[#10b981] rounded flex flex-col items-center justify-between p-1 font-mono text-[6px] shadow-[0_0_8px_rgba(16,185,129,0.3)] select-none">
+                <div className="w-[48px] h-[58px] bg-[#111827] border border-[#10b981] rounded flex flex-col items-center justify-between p-0.5 font-mono text-[6px] shadow-[0_0_8px_rgba(16,185,129,0.3)] select-none">
                   <div className="text-lg filter drop-shadow">{customer.characterEmoji}</div>
                   <div className="font-extrabold text-[#fafaf9] uppercase tracking-wide truncate w-full text-center scale-90">{customer.characterName}</div>
                   <div className={`text-[5px] px-0.5 py-[0.1px] rounded font-black border text-center leading-none ${
@@ -401,7 +417,7 @@ export const CustomerSeat: React.FC<CustomerSeatProps> = ({
           ) : (
             <div className="flex flex-col items-center justify-center h-20 pointer-events-none opacity-20">
               {variant === 'tweak' ? (
-                <div className="w-[54px] h-[70px] bg-slate-950 border border-dashed border-slate-700 rounded flex flex-col items-center justify-center text-[6px] font-mono text-slate-500 tracking-wider">
+                <div className="w-[48px] h-[58px] bg-slate-950 border border-dashed border-slate-700 rounded flex flex-col items-center justify-center text-[6px] font-mono text-slate-500 tracking-wider">
                   <span>VACANT</span>
                 </div>
               ) : (

@@ -58,6 +58,8 @@ export interface GameState {
   hasUnlockedFifthSlot: boolean;
   customersServed: number;
   totalCustomersRequired: number;
+  totalDishesRequired: number;
+  dishesConsumed: number;
   beltSpeed: number; // interval in ms (e.g., 2000ms, decreases as difficulty increases)
   levelCustomersTemplates: CustomerOrderTemplate[];
   nextCustomerIndex: number;

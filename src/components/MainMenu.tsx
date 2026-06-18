@@ -1,6 +1,6 @@
 /**
  * @license
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: Apache-2.5
  */
 
 import React from 'react';
@@ -9,7 +9,7 @@ import { Play, Sparkles, HelpCircle, Volume2, VolumeX } from 'lucide-react';
 import { sfx } from '../utils/audio';
 
 interface MainMenuProps {
-  onSelectMode: (mode: 'classic' | 'zen' | 'tweak') => void;
+  onSelectMode: (mode: 'zen' | 'tweak') => void;
   isMuted: boolean;
   onToggleMute: () => void;
   onShowTutorial: () => void;
@@ -23,7 +23,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onShowTutorial,
   highScore,
 }) => {
-  const selectMode = (mode: 'classic' | 'zen' | 'tweak') => {
+  const selectMode = (mode: 'zen' | 'tweak') => {
     sfx.playCoinDing();
     onSelectMode(mode);
   };
@@ -40,7 +40,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         backgroundSize: '24px 24px, 100% 48px',
       }}
     >
-      {/* Absolute Header Accessories */}
       <div className="absolute top-4 right-4 flex items-center gap-3 z-30">
         <button
           onClick={onToggleMute}
@@ -56,7 +55,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </button>
       </div>
 
-      {/* Falling Sakura Petals Background Effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
         {[...Array(12)].map((_, i) => (
           <motion.div
@@ -84,7 +82,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         ))}
       </div>
 
-      {/* Main Panel */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -93,11 +90,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           boxShadow: '0 25px 50px -12px rgba(84, 45, 12, 0.45)',
         }}
       >
-        {/* Decorative corner brackets or table border */}
         <div className="absolute top-4 left-4 text-xs font-mono text-[#8a5a36]/50 select-none">⛩️ KAIZEN SYSTEM</div>
         <div className="absolute top-4 right-4 text-xs font-mono text-[#8a5a36]/50 select-none">EST. 2026</div>
 
-        {/* Logo / Header Section */}
         <div className="text-center mb-8">
           <motion.span 
             className="text-5xl inline-block mb-3 drop-shadow"
@@ -120,53 +115,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           )}
         </div>
 
-        {/* Selection Cards Container */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mt-2">
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mt-2">
           
-          {/* Card Option 1: Classic Mode */}
-          <motion.div
-            whileHover={{ y: -6, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => selectMode('classic')}
-            className="flex flex-col justify-between bg-[#1f1a1a] border-[4px] border-stone-800 rounded-3xl p-6 shadow-lg cursor-pointer transition-colors relative overflow-hidden group"
-          >
-            {/* Background design accents */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-red-600/10 rounded-full blur-xl group-hover:bg-red-650/20 transition-all duration-300" />
-            
-            <div>
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-3xl text-red-500 drop-shadow">📺</span>
-                <span className="text-[10px] font-mono font-bold bg-stone-850 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-md">
-                  AUTHENTIC RETRO
-                </span>
-              </div>
-
-              <h3 className="text-xl font-serif italic font-extrabold text-[#fafaf9] mb-2 group-hover:text-red-400 transition-colors">
-                Option 1: Classic Station
-              </h3>
-              <p className="text-xs font-mono text-stone-400 leading-relaxed mb-6">
-                Play the original vintage interface. Features dark cybernetic wooden panels, high-contrast grids, responsive compact layout, and complete retro soundwaves.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between mt-auto pt-4 border-t border-stone-800">
-              <span className="text-[10px] font-mono text-stone-500 uppercase tracking-widest">
-                Classic Preset
-              </span>
-              <span className="text-xs font-bold font-mono text-red-400 flex items-center gap-1.5 bg-red-650/15 px-3 py-1 rounded-lg border border-red-500/20">
-                Play <Play className="w-3 h-3 fill-current" />
-              </span>
-            </div>
-          </motion.div>
-
-          {/* Card Option 2: Zen Pond Garden */}
           <motion.div
             whileHover={{ y: -6, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => selectMode('zen')}
             className="flex flex-col justify-between bg-[#fbf5ee] border-[4px] border-[#aa7b54] rounded-3xl p-6 shadow-lg cursor-pointer transition-colors relative overflow-hidden group"
           >
-            {/* Background design accents */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-full blur-xl group-hover:bg-sky-500/20 transition-all duration-300" />
             
             <div>
@@ -178,16 +134,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </div>
 
               <h3 className="text-xl font-serif italic font-extrabold text-[#5c3a21] mb-2 group-hover:text-[#8a5a36] transition-colors">
-                Option 2: Zen Pond Garden
+                Zen Pond Garden
               </h3>
               <p className="text-xs font-mono text-stone-700 leading-relaxed mb-6">
-                Replicate the gorgeous, high-fidelity gameplay screen. Features rich wooden decks, custom chibi waiting crowd, central Koi pond with active swimming fish, sakura blossoms, and highly smooth 2x fast continuous rotating belt.
+                The main game experience. Wooden decks, koi pond, sakura blossoms, and smooth continuous belt motion across 5 handcrafted levels with exact dish supply.
               </p>
             </div>
 
             <div className="flex items-center justify-between mt-auto pt-4 border-t border-stone-200">
               <span className="text-[10px] font-mono text-[#8a562b] uppercase tracking-widest">
-                Zen Garden Layout
+                5 Levels · Pairs of 2
               </span>
               <span className="text-xs font-bold font-mono text-white bg-[#8a5a36] hover:bg-[#724624] flex items-center gap-1.5 px-3 py-1 rounded-lg shadow-sm transition">
                 Play <Play className="w-3 h-3 fill-current" />
@@ -195,7 +151,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </div>
           </motion.div>
 
-          {/* Card Option 3: Developer & Tweak Mode */}
           <motion.div
             whileHover={{ y: -6, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -203,14 +158,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             id="mode3"
             className="flex flex-col justify-between bg-[#0c1017] border-[4px] border-emerald-900 rounded-3xl p-6 shadow-lg cursor-pointer transition-colors relative overflow-hidden group"
           >
-            {/* Background design accents */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all duration-300" />
             
             <div>
               <div className="flex justify-between items-start mb-4">
                 <span className="text-3xl text-emerald-400 font-mono drop-shadow font-extrabold">⚙️</span>
                 <span className="text-[10px] font-mono font-bold bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-md">
-                  VARIANT 3
+                  SANDBOX
                 </span>
               </div>
 
@@ -218,13 +172,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 Developer Station
               </h3>
               <p className="text-xs font-mono text-stone-400 leading-relaxed mb-6">
-                Active live telemetry data pipeline inspect metrics (waiting queue, conveyor slot density, speed sliders, system heartbeat control, direct calibration metrics).
+                Build custom levels with exact demand-matched queues, timing sliders, and live telemetry. Compile dishes in pairs of 2.
               </p>
             </div>
 
             <div className="flex flex-col gap-2 mt-auto pt-4 border-t border-emerald-950">
               <span className="text-[10px] font-mono text-emerald-600 uppercase tracking-widest">
-                Mathematical Primitive Simulator
+                Level Builder & Simulator
               </span>
               <button 
                 id="mode3-button"
@@ -234,14 +188,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 }}
                 className="w-full text-center text-xs font-bold font-mono text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg shadow-sm transition cursor-pointer"
               >
-                Variant 3: Developer & Tweak Mode
+                Open Developer Mode
               </button>
             </div>
           </motion.div>
 
         </div>
 
-        {/* Footer Info */}
         <div className="mt-8 text-[11px] font-mono text-[#8a5a36]/60 text-center uppercase tracking-widest">
           ⛩️ Relax, analyze, and dispatch with timing precision ⛩️
         </div>

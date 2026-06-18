@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plate, Customer, SushiVariety, GameState, CustomerOrderTemplate } from './types';
 import { SUSHI_VARIETIES, CHARACTER_EMOJIS, SUSHI_VARIETIES as configMap } from './sushiConfig';
 import { CustomerSeat } from './components/CustomerSeat';
-import { ConveyorBelt, SLOT_COORDS } from './components/ConveyorBelt';
+import { ConveyorBelt } from './components/ConveyorBelt';
 import { FreeBuffer } from './components/FreeBuffer';
 import { QueueDispenser } from './components/QueueDispenser';
 import { SushiPlate } from './components/SushiPlate';
@@ -51,28 +51,24 @@ const LEVEL_CONFIGS: {
     templates: [
       { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'maguro', orderedCount: 4 },
       { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'kappa', orderedCount: 4 },
-      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'tamago', orderedCount: 6 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'tamago', orderedCount: 4 },
       { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'maguro', orderedCount: 4 },
-      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'kappa', orderedCount: 6 },
-      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'tamago', orderedCount: 4 },
-      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'maguro', orderedCount: 6 },
-      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'kappa', orderedCount: 4 },
-    ]
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'kappa', orderedCount: 4 },
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'tamago', orderedCount: 4 },
+    ],
   },
   {
     levelNumber: 2,
     templates: [
       { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'maguro', orderedCount: 4 },
-      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'california', orderedCount: 6 },
-      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'tamago', orderedCount: 4 },
-      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'california', orderedCount: 4 },
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'tamago', orderedCount: 6 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'kappa', orderedCount: 4 },
       { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'california', orderedCount: 4 },
       { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 6 },
       { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'tamago', orderedCount: 4 },
-      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'california', orderedCount: 6 },
-      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'kappa', orderedCount: 4 },
-      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'maguro', orderedCount: 6 },
-    ]
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'kappa', orderedCount: 4 },
+    ],
   },
   {
     levelNumber: 3,
@@ -82,14 +78,10 @@ const LEVEL_CONFIGS: {
       { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'ebi', orderedCount: 6 },
       { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'tamago', orderedCount: 4 },
       { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'kappa', orderedCount: 6 },
+      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 4 },
       { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'ebi', orderedCount: 4 },
-      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'maguro', orderedCount: 4 },
-      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'california', orderedCount: 6 },
-      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'ebi', orderedCount: 6 },
-      { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'tamago', orderedCount: 4 },
-      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'kappa', orderedCount: 6 },
-      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'maguro', orderedCount: 6 },
-    ]
+      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'california', orderedCount: 6 },
+    ],
   },
   {
     levelNumber: 4,
@@ -102,13 +94,9 @@ const LEVEL_CONFIGS: {
       { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 6 },
       { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'salmon', orderedCount: 4 },
       { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'california', orderedCount: 6 },
-      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'tamago', orderedCount: 6 },
+      { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'tamago', orderedCount: 4 },
       { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'ebi', orderedCount: 4 },
-      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'salmon', orderedCount: 6 },
-      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'unagi', orderedCount: 4 },
-      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'california', orderedCount: 6 },
-      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 8 },
-    ]
+    ],
   },
   {
     levelNumber: 5,
@@ -123,15 +111,151 @@ const LEVEL_CONFIGS: {
       { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'tamago', orderedCount: 6 },
       { characterEmoji: '🐱', characterName: 'Neko-san', orderedVariety: 'unagi', orderedCount: 4 },
       { characterEmoji: '🦊', characterName: 'Kitsune-sama', orderedVariety: 'ikura', orderedCount: 4 },
-      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'unagi', orderedCount: 6 },
-      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'ikura', orderedCount: 6 },
-      { characterEmoji: '🐰', characterName: 'Usagi-chan', orderedVariety: 'salmon', orderedCount: 4 },
-      { characterEmoji: '🦁', characterName: 'Leo-sensei', orderedVariety: 'maguro', orderedCount: 6 },
-      { characterEmoji: '🐵', characterName: 'Saru-kun', orderedVariety: 'california', orderedCount: 6 },
-      { characterEmoji: '🐸', characterName: 'Kaeru-sama', orderedVariety: 'maguro', orderedCount: 4 },
-    ]
-  }
+      { characterEmoji: '🐻', characterName: 'Kuma-chan', orderedVariety: 'salmon', orderedCount: 6 },
+      { characterEmoji: '🐼', characterName: 'Panda-dono', orderedVariety: 'maguro', orderedCount: 4 },
+    ],
+  },
 ];
+
+const shuffleArray = <T,>(arr: T[]): T[] => {
+  const newArr = [...arr];
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+  return newArr;
+};
+
+const createPlate = (variety: SushiVariety): Plate => ({
+  id: `plate-${Math.random().toString(36).substring(2, 9)}-${Math.random().toString(36).substring(2, 5)}`,
+  variety,
+  count: 1,
+  injectedSlot: -1,
+  currentSlot: -1,
+  stepsTaken: 0,
+});
+
+const getTotalDishesRequired = (templates: CustomerOrderTemplate[]): number =>
+  templates.reduce((sum, t) => sum + t.orderedCount, 0);
+
+const countPlatesInQueues = (queues: Plate[][]): number =>
+  queues.reduce((sum, col) => sum + col.length, 0);
+
+const countAllPlatesInPlay = (
+  queues: Plate[][],
+  beltPlates: Plate[],
+  freeSlots: (Plate | null)[],
+): number =>
+  countPlatesInQueues(queues) + beltPlates.length + freeSlots.filter(Boolean).length;
+
+/** Build pairs of 2 identical plates for even-count demand */
+const buildPairBlocks = (variety: SushiVariety, count: number): Plate[][] => {
+  const blocks: Plate[][] = [];
+  for (let i = 0; i < count; i += 2) {
+    blocks.push([createPlate(variety), createPlate(variety)]);
+  }
+  return blocks;
+};
+
+/** Exact supply in pairs of 2 — total plates = sum of all customer orderedCount */
+const buildQueuesFromTemplates = (
+  templates: CustomerOrderTemplate[],
+  numQueues = 3,
+): Plate[][] => {
+  const blocks: Plate[][] = [];
+  for (const template of templates) {
+    blocks.push(...buildPairBlocks(template.orderedVariety, template.orderedCount));
+  }
+  const shuffledBlocks = shuffleArray(blocks);
+  const queues = Array.from({ length: numQueues }, () => [] as Plate[]);
+  shuffledBlocks.forEach((block, idx) => {
+    queues[idx % numQueues].push(...block);
+  });
+  return queues;
+};
+
+const buildQueuesFromDemands = (
+  demands: { dishId: number; quantity: number }[],
+  numQueues: number,
+): Plate[][] => {
+  const blocks: Plate[][] = [];
+  for (const demand of demands) {
+    const variety = ALL_VARIETIES[demand.dishId % ALL_VARIETIES.length];
+    const qty = Math.max(2, Math.round(demand.quantity / 2) * 2);
+    blocks.push(...buildPairBlocks(variety, qty));
+  }
+  const shuffledBlocks = shuffleArray(blocks);
+  const queues = Array.from({ length: numQueues }, () => [] as Plate[]);
+  shuffledBlocks.forEach((block, idx) => {
+    queues[idx % numQueues].push(...block);
+  });
+  return queues;
+};
+
+const getRemainingVarietyDemand = (
+  customers: (Customer | null)[],
+  templates: CustomerOrderTemplate[],
+  nextCustomerIndex: number,
+): Map<SushiVariety, number> => {
+  const demand = new Map<SushiVariety, number>();
+  const add = (variety: SushiVariety, count: number) => {
+    if (count <= 0) return;
+    demand.set(variety, (demand.get(variety) || 0) + count);
+  };
+
+  for (const c of customers) {
+    if (!c || c.state === 'satisfied' || c.state === 'leaving') continue;
+    add(c.orderedVariety, c.orderedCount - c.satisfiedCount);
+  }
+  for (let i = nextCustomerIndex; i < templates.length; i++) {
+    add(templates[i].orderedVariety, templates[i].orderedCount);
+  }
+  return demand;
+};
+
+/** Remove plates whose variety no customer still needs — stops junk filling belt/buffer */
+const purgeOrphanPlates = (state: GameState): GameState => {
+  const demand = getRemainingVarietyDemand(
+    state.customers,
+    state.levelCustomersTemplates,
+    state.nextCustomerIndex,
+  );
+  const isNeeded = (variety: SushiVariety) => (demand.get(variety) || 0) > 0;
+
+  const queues = state.queues.map((col) => col.filter((p) => isNeeded(p.variety)));
+  const beltPlates = state.beltPlates.filter((p) => isNeeded(p.variety));
+  const freeSlots = state.freeSlots.map((slot) => (slot && isNeeded(slot.variety) ? slot : null));
+
+  const platesBefore =
+    countPlatesInQueues(state.queues) + state.beltPlates.length + state.freeSlots.filter(Boolean).length;
+  const platesAfter =
+    countPlatesInQueues(queues) + beltPlates.length + freeSlots.filter(Boolean).length;
+  const purged = platesBefore - platesAfter;
+
+  return {
+    ...state,
+    queues,
+    beltPlates,
+    freeSlots,
+    totalDishesRequired: Math.max(state.dishesConsumed, state.totalDishesRequired - purged),
+  };
+};
+
+const getTotalRemainingDemand = (
+  customers: (Customer | null)[],
+  templates: CustomerOrderTemplate[],
+  nextCustomerIndex: number,
+): number => {
+  const demand = getRemainingVarietyDemand(customers, templates, nextCustomerIndex);
+  let sum = 0;
+  demand.forEach((count) => {
+    sum += count;
+  });
+  return sum;
+};
+
+const getTotalDemandFromDemands = (demands: { quantity: number }[]): number =>
+  demands.reduce((sum, d) => sum + d.quantity, 0);
 
 const initializeLevelData = (level: number) => {
   // Grab configuration looping if exceeded (though we end game at lvl 5)
@@ -140,69 +264,8 @@ const initializeLevelData = (level: number) => {
 
   const totalCustomersRequired = config.templates.length;
   const levelCustomersTemplates = config.templates;
-
-  const splitEvenIntoBlocks = (count: number): number[] => {
-    const blocks: number[] = [];
-    let remaining = count;
-    while (remaining > 0) {
-      if (remaining >= 6) {
-        const choices = [6, 4, 2];
-        const selected = choices[Math.floor(Math.random() * choices.length)];
-        blocks.push(selected);
-        remaining -= selected;
-      } else if (remaining >= 4) {
-        const choices = [4, 2];
-        const selected = choices[Math.floor(Math.random() * choices.length)];
-        blocks.push(selected);
-        remaining -= selected;
-      } else {
-        blocks.push(2);
-        remaining -= 2;
-      }
-    }
-    return blocks;
-  };
-
-  const listOfBlocks: Plate[][] = [];
-
-  for (const template of levelCustomersTemplates) {
-    const sizes = splitEvenIntoBlocks(template.orderedCount);
-    for (const size of sizes) {
-      const block: Plate[] = [];
-      for (let i = 0; i < size; i++) {
-        block.push({
-          id: `plate-${Math.random().toString(36).substring(2, 9)}-${Math.random().toString(36).substring(2, 5)}`,
-          variety: template.orderedVariety,
-          count: 1,
-          injectedSlot: -1,
-          currentSlot: -1,
-          stepsTaken: 0,
-        });
-      }
-      listOfBlocks.push(block);
-    }
-  }
-
-  const shuffleArray = <T,>(arr: T[]): T[] => {
-    const newArr = [...arr];
-    for (let i = newArr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-    }
-    return newArr;
-  };
-
-  const shuffledBlocks = shuffleArray(listOfBlocks);
-
-  const q0: Plate[] = [];
-  const q1: Plate[] = [];
-  const q2: Plate[] = [];
-  const queues = [q0, q1, q2];
-
-  shuffledBlocks.forEach((block, idx) => {
-    const targetQueue = queues[idx % 3];
-    targetQueue.push(...block);
-  });
+  const totalDishesRequired = getTotalDishesRequired(levelCustomersTemplates);
+  const queues = buildQueuesFromTemplates(levelCustomersTemplates, 3);
 
   const initialCustomers: (Customer | null)[] = [null, null, null, null];
   for (let s = 0; s < 4; s++) {
@@ -225,6 +288,7 @@ const initializeLevelData = (level: number) => {
 
   return {
     totalCustomersRequired,
+    totalDishesRequired,
     levelCustomersTemplates,
     queues,
     customers: initialCustomers,
@@ -249,9 +313,11 @@ export default function App() {
       isGameOver: false,
       customersServed: 0,
       totalCustomersRequired: lData.totalCustomersRequired,
+      totalDishesRequired: lData.totalDishesRequired,
+      dishesConsumed: 0,
       levelCustomersTemplates: lData.levelCustomersTemplates,
       nextCustomerIndex: lData.nextCustomerIndex,
-      beltSpeed: 1150, // 2x faster continuous motion (1150ms instead of 2300ms)
+      beltSpeed: 850,
     };
   });
 
@@ -260,14 +326,15 @@ export default function App() {
   const [hasFirstLaunch, setHasFirstLaunch] = useState(false);
   const [levelUpMessage, setLevelUpMessage] = useState<string | null>(null);
   const [showAdSpinner, setShowAdSpinner] = useState(false);
-  const [lastTickTime, setLastTickTime] = useState<number>(Date.now());
+  const beltSpeedRef = useRef(gameState.beltSpeed);
+  beltSpeedRef.current = gameState.beltSpeed;
   
-  const [gameMode, setGameMode] = useState<'menu' | 'classic' | 'zen' | 'tweak'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'zen' | 'tweak'>('menu');
   const [isSimPaused, setIsSimPaused] = useState(false);
   const [dockCrashThreshold, setDockCrashThreshold] = useState(5);
   const [total360Rotations, setTotal360Rotations] = useState(0);
   const [zenBaseBeltSpeed, setZenBaseBeltSpeed] = useState(850);
-  const [classicBaseBeltSpeed, setClassicBaseBeltSpeed] = useState(1150);
+  const [zenTimeToEat, setZenTimeToEat] = useState(50);
 
   // NEW TWEAK / LEVEL BUILDER STATES
   const [tweakNumCustomers, setTweakNumCustomers] = useState<number>(8);
@@ -296,7 +363,7 @@ export default function App() {
   const [tweakNumSeats, setTweakNumSeats] = useState<number>(4);
   const [tweakNumFreeDocks, setTweakNumFreeDocks] = useState<number>(5);
 
-  const [tweakTimeToEat, setTweakTimeToEat] = useState<number>(2000);
+  const [tweakTimeToEat, setTweakTimeToEat] = useState<number>(50);
   const [tweakBeltSpeed, setTweakBeltSpeed] = useState<number>(1150);
   const [tweakTimeToLeave, setTweakTimeToLeave] = useState<number>(1500);
   const [tweakSpawnFrequency, setTweakSpawnFrequency] = useState<number>(1000);
@@ -318,14 +385,7 @@ export default function App() {
   };
 
   const [savedLevels, setSavedLevels] = useState<any[]>(() => {
-    try {
-      const saved = localStorage.getItem('kaizen_saved_levels');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      // ignore
-    }
-    // Return pristine pre-populated developer default level configurations
-    return [
+    const defaultLevels = [
       {
         id: 'sample-lvl-1',
         name: '🍣 Sandbox Challenge 1',
@@ -334,9 +394,9 @@ export default function App() {
         customerDemands: [
           { dishId: 0, quantity: 4 },
           { dishId: 1, quantity: 4 },
-          { dishId: 2, quantity: 6 },
+          { dishId: 2, quantity: 4 },
           { dishId: 0, quantity: 4 },
-          { dishId: 1, quantity: 6 },
+          { dishId: 1, quantity: 4 },
           { dishId: 2, quantity: 4 },
         ],
         numBeltSlots: 12,
@@ -347,73 +407,47 @@ export default function App() {
         timeToLeave: 1500,
         spawnFrequency: 1000,
         numQueues: 3,
-        queues: [
-          [
-            { id: 'p1', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p2', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p3', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p4', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-          ],
-          [
-            { id: 'p5', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p6', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p7', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p8', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-          ],
-          [
-            { id: 'p9', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p10', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p11', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p12', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-          ]
-        ]
       },
       {
         id: 'sample-lvl-2',
         name: '⚡ Speed Run Sprint',
-        numCustomers: 12,
+        numCustomers: 8,
         numDishTypes: 4,
         customerDemands: [
-          { dishId: 0, quantity: 3 }, { dishId: 1, quantity: 3 }, { dishId: 2, quantity: 3 }, { dishId: 3, quantity: 3 },
           { dishId: 0, quantity: 4 }, { dishId: 1, quantity: 4 }, { dishId: 2, quantity: 4 }, { dishId: 3, quantity: 4 },
-          { dishId: 0, quantity: 5 }, { dishId: 1, quantity: 5 }, { dishId: 2, quantity: 5 }, { dishId: 3, quantity: 5 },
+          { dishId: 0, quantity: 6 }, { dishId: 1, quantity: 6 }, { dishId: 2, quantity: 6 }, { dishId: 3, quantity: 6 },
         ],
         numBeltSlots: 12,
-        numSeats: 6,
-        numFreeDocks: 6,
+        numSeats: 4,
+        numFreeDocks: 5,
         timeToEat: 1500,
         beltSpeed: 600,
         timeToLeave: 1000,
         spawnFrequency: 800,
-        numQueues: 4,
-        queues: [
-          [
-            { id: 'p1', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p2', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p1a', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p2a', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-          ],
-          [
-            { id: 'p3', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p4', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p3a', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p4a', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-          ],
-          [
-            { id: 'p5', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p6', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p5a', variety: 'maguro', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p6a', variety: 'california', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-          ],
-          [
-            { id: 'p7', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p8', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p7a', variety: 'kappa', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-            { id: 'p8a', variety: 'tamago', count: 1, injectedSlot: -1, currentSlot: -1, stepsTaken: 0 },
-          ],
-        ]
-      }
+        numQueues: 3,
+      },
     ];
+
+    try {
+      const saved = localStorage.getItem('kaizen_saved_levels');
+      if (saved) {
+        const parsed = JSON.parse(saved) as any[];
+        return parsed.map((level) => ({
+          ...level,
+          queues: buildQueuesFromDemands(
+            (level.customerDemands || []).slice(0, level.numCustomers || 0),
+            level.numQueues || 3,
+          ),
+        }));
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    return defaultLevels.map((level) => ({
+      ...level,
+      queues: buildQueuesFromDemands(level.customerDemands, level.numQueues),
+    }));
   });
 
   const [activeCustomLevel, setActiveCustomLevel] = useState<any | null>(null);
@@ -429,70 +463,18 @@ export default function App() {
   }
 
   const handleCompileTweakQueues = () => {
-    const totalRequired: Record<number, number> = {};
-    for (let i = 0; i < tweakNumCustomers; i++) {
-      const d = tweakCustomerDemands[i] || { dishId: i % tweakNumDishTypes, quantity: 4 };
-      totalRequired[d.dishId] = (totalRequired[d.dishId] || 0) + d.quantity;
-    }
-
-    const compiledPlates: any[] = [];
-    for (let dishId = 0; dishId < tweakNumDishTypes; dishId++) {
-      const qty = totalRequired[dishId] || 0;
-      const variety = ALL_VARIETIES[dishId % ALL_VARIETIES.length] as any;
-      for (let j = 0; j < qty; j++) {
-        compiledPlates.push({
-          id: `plate-compiled-${Math.random().toString(36).substring(2, 9)}`,
-          variety,
-          count: 1,
-          injectedSlot: -1,
-          currentSlot: -1,
-          stepsTaken: 0,
-        });
-      }
-    }
-
-    // Divide round-robin across specified number of target queues
-    const qs = Array.from({ length: tweakNumQueues }).map(() => [] as any[]);
-    compiledPlates.forEach((p, idx) => {
-      qs[idx % tweakNumQueues].push(p);
-    });
+    const demands = tweakCustomerDemands.slice(0, tweakNumCustomers);
+    const qs = buildQueuesFromDemands(demands, tweakNumQueues);
+    const totalItems = getTotalDemandFromDemands(demands);
 
     setTweakGeneratedQueues(qs);
-    triggerNotification(`Lanes compiled! Total items: ${compiledPlates.length}`);
+    triggerNotification(`Lanes compiled! Total items: ${totalItems}`);
   };
 
   const handleGenerateTweakLevel = () => {
-    // Compile if queues not compiled yet
-    let activeQueues = tweakGeneratedQueues;
-    if (activeQueues.length !== tweakNumQueues || activeQueues.every(q => q.length === 0)) {
-      // auto compile
-      const totalRequired: Record<number, number> = {};
-      for (let i = 0; i < tweakNumCustomers; i++) {
-        const d = tweakCustomerDemands[i] || { dishId: i % tweakNumDishTypes, quantity: 4 };
-        totalRequired[d.dishId] = (totalRequired[d.dishId] || 0) + d.quantity;
-      }
-      const compiledPlates: any[] = [];
-      for (let dishId = 0; dishId < tweakNumDishTypes; dishId++) {
-        const qty = totalRequired[dishId] || 0;
-        const variety = ALL_VARIETIES[dishId % ALL_VARIETIES.length] as any;
-        for (let j = 0; j < qty; j++) {
-          compiledPlates.push({
-            id: `plate-gen-${Math.random().toString(36).substring(2, 9)}`,
-            variety,
-            count: 1,
-            injectedSlot: -1,
-            currentSlot: -1,
-            stepsTaken: 0,
-          });
-        }
-      }
-      const qs = Array.from({ length: tweakNumQueues }).map(() => [] as any[]);
-      compiledPlates.forEach((p, idx) => {
-        qs[idx % tweakNumQueues].push(p);
-      });
-      activeQueues = qs;
-      setTweakGeneratedQueues(qs);
-    }
+    const demands = tweakCustomerDemands.slice(0, tweakNumCustomers);
+    const activeQueues = buildQueuesFromDemands(demands, tweakNumQueues);
+    setTweakGeneratedQueues(activeQueues);
 
     const customLevelObj = {
       id: `custom-lvl-${Date.now()}`,
@@ -538,6 +520,11 @@ export default function App() {
       };
     });
 
+    const compiledQueues = buildQueuesFromDemands(
+      levelConf.customerDemands.slice(0, levelConf.numCustomers),
+      levelConf.numQueues,
+    );
+
     // Populate actual active customer seats
     const initialCustomers: (Customer | null)[] = Array(levelConf.numSeats).fill(null);
     for (let s = 0; s < levelConf.numSeats; s++) {
@@ -565,12 +552,14 @@ export default function App() {
       beltPlates: [],
       freeSlots: Array(levelConf.numFreeDocks).fill(null),
       hasUnlockedFifthSlot: levelConf.numFreeDocks > 4,
-      queues: JSON.parse(JSON.stringify(levelConf.queues)), // Deep copy generated queues
+      queues: compiledQueues,
       customers: initialCustomers,
       isGameOver: false,
       isGameVictory: false,
       customersServed: 0,
       totalCustomersRequired: levelCustomersTemplates.length,
+      totalDishesRequired: getTotalDishesRequired(levelCustomersTemplates),
+      dishesConsumed: 0,
       levelCustomersTemplates: levelCustomersTemplates,
       nextCustomerIndex: levelCustomersTemplates.length > levelConf.numSeats ? levelConf.numSeats : levelCustomersTemplates.length,
       beltSpeed: levelConf.beltSpeed,
@@ -586,7 +575,7 @@ export default function App() {
     setTweakTimeToLeave(levelConf.timeToLeave);
     setTweakSpawnFrequency(levelConf.spawnFrequency);
     setTweakNumQueues(levelConf.numQueues);
-    setTweakGeneratedQueues(levelConf.queues);
+    setTweakGeneratedQueues(compiledQueues);
 
     triggerNotification(`Level "${levelConf.name}" Locked & Loaded!`);
   };
@@ -638,22 +627,27 @@ export default function App() {
     // Level 1 data is preloaded during initial useState, so this remains idle.
   }, []);
 
-  // Main conveyor belt loop tick
+  // Main conveyor belt loop tick — recursive timeout reads beltSpeedRef so speed
+  // changes (zen decay / tap turbo) never cancel an in-flight tick window
   useEffect(() => {
     if (gameState.isGameOver || levelUpMessage || showTutorial || showAdSpinner || isSimPaused) return;
 
-    const interval = setInterval(() => {
-      tickConveyorBelt();
-    }, gameState.beltSpeed);
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const scheduleTick = () => {
+      timeoutId = setTimeout(() => {
+        tickConveyorBelt();
+        scheduleTick();
+      }, beltSpeedRef.current);
+    };
+    scheduleTick();
 
-    return () => clearInterval(interval);
+    return () => clearTimeout(timeoutId);
   }, [
-    gameState.beltSpeed, 
-    gameState.isGameOver, 
-    levelUpMessage, 
-    showTutorial, 
+    gameState.isGameOver,
+    levelUpMessage,
+    showTutorial,
     showAdSpinner,
-    isSimPaused
+    isSimPaused,
   ]);
 
   // Zen Mode speed decay: smoothly recovers original baseline speed
@@ -665,7 +659,7 @@ export default function App() {
         const baseSpeed = zenBaseBeltSpeed;
         if (prev.beltSpeed >= baseSpeed) return prev;
 
-        const nextSpeed = Math.min(baseSpeed, prev.beltSpeed + (baseSpeed - prev.beltSpeed) * 0.12);
+        const nextSpeed = Math.round(Math.min(baseSpeed, prev.beltSpeed + (baseSpeed - prev.beltSpeed) * 0.12));
         return {
           ...prev,
           beltSpeed: nextSpeed,
@@ -684,34 +678,58 @@ export default function App() {
     isSimPaused
   ]);
 
-  // Reactive level-up trigger: Fires ONLY when all level diners have been successfully served,
-  // AND the dispatcher queues, rotating belt, and buffer tray slots are completely empty.
+  // Reactive level-up trigger: all diners served AND no remaining customer demand
   useEffect(() => {
     if (gameState.isGameOver || levelUpMessage || showTutorial || showAdSpinner || gameMode === 'menu') return;
 
-    if (gameState.customersServed >= gameState.totalCustomersRequired) {
-      const isBeltEmpty = gameState.beltPlates.length === 0;
-      const isQueuesEmpty = gameState.queues.every((col) => col.length === 0);
-      const isFreeSlotsEmpty = gameState.freeSlots.every((slot) => slot === null);
+    const allDinersComplete =
+      gameState.customersServed >= gameState.totalCustomersRequired &&
+      gameState.nextCustomerIndex >= gameState.levelCustomersTemplates.length;
+    const remainingDemand = getTotalRemainingDemand(
+      gameState.customers,
+      gameState.levelCustomersTemplates,
+      gameState.nextCustomerIndex,
+    );
 
-      if (isBeltEmpty && isQueuesEmpty && isFreeSlotsEmpty) {
-        const timer = setTimeout(() => {
-          if (gameMode === 'tweak') {
-            setIsSimPaused(true);
-            setGameState(prev => ({
-              ...prev,
-              isGameVictory: true,
-            }));
-          } else {
-            triggerLevelUp(gameState.level + 1);
-          }
-        }, 800);
-        return () => clearTimeout(timer);
-      }
+    if (!allDinersComplete || remainingDemand > 0) return;
+
+    const platesRemaining = countAllPlatesInPlay(
+      gameState.queues,
+      gameState.beltPlates,
+      gameState.freeSlots,
+    );
+
+    // When every diner is satisfied, any leftover plates are surplus — clear them so the station can close
+    if (platesRemaining > 0) {
+      triggerNotification('Surplus dishes cleared — station closing!');
+      setGameState((prev) => ({
+        ...prev,
+        beltPlates: [],
+        queues: prev.queues.map(() => [] as Plate[]),
+        freeSlots: prev.freeSlots.map(() => null),
+      }));
+      return;
     }
+
+    const timer = setTimeout(() => {
+      if (gameMode === 'tweak') {
+        setIsSimPaused(true);
+        setGameState((prev) => ({
+          ...prev,
+          isGameVictory: true,
+        }));
+      } else {
+        triggerLevelUp(gameState.level + 1);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, [
     gameState.customersServed,
     gameState.totalCustomersRequired,
+    gameState.customers,
+    gameState.nextCustomerIndex,
+    gameState.levelCustomersTemplates,
     gameState.beltPlates,
     gameState.queues,
     gameState.freeSlots,
@@ -767,7 +785,6 @@ export default function App() {
 
   // Main ticking logic: moves plates anti-clockwise and resolves overflows/matches
   const tickConveyorBelt = () => {
-    setLastTickTime(Date.now());
     setGameState((prev) => {
       if (prev.isGameOver) return prev;
 
@@ -877,12 +894,12 @@ export default function App() {
         }
       }
 
-      return {
+      return purgeOrphanPlates({
         ...prev,
         beltPlates: newBeltPlates,
         freeSlots: newFreeSlots,
         customers: updatedCustomers,
-      };
+      });
     });
   };
 
@@ -903,9 +920,9 @@ export default function App() {
   const feedCustomerAtSeat = (seatIndex: number, plateCount: number) => {
     sfx.playIntercept();
 
-    const eatDelay = gameMode === 'tweak' ? tweakTimeToEat : 2000;
+    const eatDelay = Math.max(1, gameMode === 'tweak' ? tweakTimeToEat : zenTimeToEat);
     const leaveDelay = gameMode === 'tweak' ? tweakTimeToLeave : 1500;
-    const satisfiedDelay = gameMode === 'tweak' ? tweakTimeToEat : 2000;
+    const satisfiedDelay = Math.max(1, gameMode === 'tweak' ? tweakTimeToEat : zenTimeToEat);
 
     setTimeout(() => {
       setGameState((prev) => {
@@ -915,10 +932,11 @@ export default function App() {
         });
 
         const customer = updatedCustomers[seatIndex];
-        if (!customer || customer.state !== 'eating') return prev;
+        if (!customer || customer.chopstickTicks <= 0) return prev;
+        if (customer.satisfiedCount >= customer.orderedCount) return prev;
 
-        // Apply satisfied quantity per plate consumed
-        const nextSatisfied = customer.satisfiedCount + 1;
+        const piecesEaten = Math.max(1, plateCount);
+        const nextSatisfied = customer.satisfiedCount + piecesEaten;
 
         customer.satisfiedCount = nextSatisfied;
         customer.bowlCount += 1; // Spawns an empty plate/bowl
@@ -984,15 +1002,17 @@ export default function App() {
                     return c4;
                   });
 
-                  // Increment global served count for level achievements
-                  const nextServed = prev4.customersServed + 1;
+                  const nextServed = Math.min(
+                    prev4.totalCustomersRequired,
+                    prev4.customersServed + 1,
+                  );
                   
-                  return {
+                  return purgeOrphanPlates({
                     ...prev4,
                     customersServed: nextServed,
                     customers: spawnedCustomers,
                     nextCustomerIndex: nextCustIndex,
-                  };
+                  });
                 });
 
                 // Level-up will be reactively triggered by useEffect once the board is fully empty and cleared
@@ -1003,19 +1023,21 @@ export default function App() {
 
           }, satisfiedDelay);
 
-          return {
+          return purgeOrphanPlates({
             ...prev,
             coins: prev.coins + earnedCoins,
             score: prev.score + earnedScore,
+            dishesConsumed: prev.dishesConsumed + piecesEaten,
             customers: updatedCustomers,
-          };
+          });
         } else {
           // Go back to waiting for more plates!
           customer.state = 'waiting';
-          return {
+          return purgeOrphanPlates({
             ...prev,
+            dishesConsumed: prev.dishesConsumed + piecesEaten,
             customers: updatedCustomers,
-          };
+          });
         }
       });
     }, eatDelay);
@@ -1041,6 +1063,8 @@ export default function App() {
       level: nextLevel,
       customersServed: 0,
       totalCustomersRequired: lData.totalCustomersRequired,
+      totalDishesRequired: lData.totalDishesRequired,
+      dishesConsumed: 0,
       beltPlates: [], // clear belt plates for fresh start
       freeSlots: Array(5).fill(null), // clear tray buffer items on level up
       queues: lData.queues,
@@ -1110,18 +1134,12 @@ export default function App() {
         }
       }
 
-      // If in Zen Mode, reduce beltSpeed (increasing physical velocity/speed and accelerating interval)
-      let nextSpeed = prev.beltSpeed;
-      if (gameMode === 'zen') {
-        nextSpeed = Math.max(240, prev.beltSpeed * 0.72);
-      }
-
+      // Dispatch without altering belt speed — keeps tick interval & motion smooth
       return {
         ...prev,
         queues: queueOverride,
         beltPlates: isInstantEaten ? prev.beltPlates : [...prev.beltPlates, dispatchedPlate],
         customers: updatedCustomers,
-        beltSpeed: nextSpeed,
       };
     });
   };
@@ -1154,16 +1172,10 @@ export default function App() {
         spawnTime: Date.now(),
       };
 
-      let nextSpeed = prev.beltSpeed;
-      if (gameMode === 'zen') {
-        nextSpeed = Math.max(240, prev.beltSpeed * 0.72);
-      }
-
       return {
         ...prev,
         freeSlots: newFreeSlots,
         beltPlates: [...prev.beltPlates, returnedPlate],
-        beltSpeed: nextSpeed,
       };
     });
   };
@@ -1226,9 +1238,11 @@ export default function App() {
       isGameVictory: false,
       customersServed: 0,
       totalCustomersRequired: lData.totalCustomersRequired,
+      totalDishesRequired: lData.totalDishesRequired,
+      dishesConsumed: 0,
       levelCustomersTemplates: lData.levelCustomersTemplates,
       nextCustomerIndex: lData.nextCustomerIndex,
-      beltSpeed: gameMode === 'zen' ? zenBaseBeltSpeed : classicBaseBeltSpeed,
+      beltSpeed: zenBaseBeltSpeed,
     });
     setLevelUpMessage(null);
   };
@@ -1246,19 +1260,12 @@ export default function App() {
           setGameMode(mode);
           if (mode === 'zen') {
             setZenBaseBeltSpeed(850);
-          } else if (mode === 'classic') {
-            setClassicBaseBeltSpeed(1150);
           }
           handleRestartGame();
           if (mode === 'zen') {
             setGameState(prev => ({
               ...prev,
               beltSpeed: 850,
-            }));
-          } else if (mode === 'classic') {
-            setGameState(prev => ({
-              ...prev,
-              beltSpeed: 1150,
             }));
           }
         }}
@@ -1270,10 +1277,17 @@ export default function App() {
     );
   }
 
+  const remainingDemandTotal = getTotalRemainingDemand(
+    gameState.customers,
+    gameState.levelCustomersTemplates,
+    gameState.nextCustomerIndex,
+  );
+  const dishesProgressTarget = gameState.dishesConsumed + remainingDemandTotal;
+
   return (
     <div 
       className={`w-full h-screen max-h-screen flex items-stretch justify-center p-0 select-none relative font-sans antialiased overflow-hidden transition-all duration-500 ${
-        gameMode === 'zen' ? 'bg-[#edd4b8] text-[#5c3a21]' : (gameMode === 'tweak' ? 'bg-[#030712] text-slate-100 tweak-mode' : 'bg-[#111] text-[#f5f5f0]')
+        gameMode === 'zen' ? 'bg-[#edd4b8] text-[#5c3a21]' : 'bg-[#030712] text-slate-100 tweak-mode'
       }`}
       style={{
         height: '100vh',
@@ -1455,11 +1469,13 @@ export default function App() {
                             <span className="text-slate-500">Qty:</span>
                             <input 
                               type="number"
-                              min={1}
-                              max={15}
+                              min={2}
+                              max={16}
+                              step={2}
                               value={demand.quantity}
                               onChange={(e) => {
-                                const newQty = Math.max(1, Math.min(15, parseInt(e.target.value) || 1));
+                                const raw = Math.max(2, Math.min(16, parseInt(e.target.value) || 2));
+                                const newQty = Math.round(raw / 2) * 2;
                                 setTweakCustomerDemands(prev => {
                                   const copy = [...prev];
                                   if (!copy[i]) copy[i] = { dishId: 0, quantity: 4 };
@@ -1521,12 +1537,12 @@ export default function App() {
                     Time to Eat (ms)
                     <input 
                       type="number" 
-                      min={500} 
+                      min={0} 
                       max={10000} 
-                      step={100}
+                      step={10}
                       value={tweakTimeToEat}
                       onChange={(e) => {
-                        const val = Math.max(500, Math.min(10000, parseInt(e.target.value) || 2000));
+                        const val = Math.max(0, Math.min(10000, parseInt(e.target.value) || 50));
                         setTweakTimeToEat(val);
                       }}
                       className="mt-1 bg-slate-950 border border-slate-800 rounded p-1 text-xs text-white outline-none font-mono"
@@ -1664,7 +1680,7 @@ export default function App() {
             
             {/* Aspect Square Card mirroring perfect landscape-constrained layout */}
             <div 
-              className="w-full max-w-[min(calc(100vh-64px),720px)] aspect-square bg-[#070b13] border-[3px] border-[#131d2f] rounded-[24px] relative shadow-2xl flex flex-col justify-between p-4 my-auto mx-auto"
+              className="w-full max-w-[min(calc(100vh-64px),720px)] h-full max-h-full bg-[#070b13] border-[3px] border-[#131d2f] rounded-[24px] relative shadow-2xl flex flex-col justify-between p-3 my-auto mx-auto min-h-0"
               style={{
                 boxSizing: 'border-box',
               }}
@@ -1706,129 +1722,54 @@ export default function App() {
               </div>
 
               {/* MAIN CONTENT AREA: Conveyor, Plates and Seats */}
-              <div className="flex-1 relative w-full h-[60%] my-auto flex items-center justify-center">
-                
-                {/* Conveyor Belt Loop in precise central aspect */}
-                <div className="w-[50%] h-[40%] absolute" style={{ left: '25%', top: '30%' }}>
-                  <ConveyorBelt 
-                    plates={gameState.beltPlates}
-                    highlightedSlots={beltWarnings}
-                    lastTickTime={lastTickTime}
-                    beltSpeed={gameState.beltSpeed}
-                    variant="tweak"
-                  />
+              <div className="flex-1 min-h-0 w-full flex items-center justify-center py-1">
+                <div className="flex items-center justify-center gap-1.5 w-full h-full max-h-[min(38vh,220px)] px-1">
+                  {/* Left seats */}
+                  <div className="flex flex-col gap-1 items-center justify-center shrink-0 h-full">
+                    <CustomerSeat
+                      customer={gameState.customers[0]}
+                      seatIndex={0}
+                      side="left"
+                      onArrived={handleCustomerArrived}
+                      variant="tweak"
+                    />
+                    <CustomerSeat
+                      customer={gameState.customers[1]}
+                      seatIndex={1}
+                      side="left"
+                      onArrived={handleCustomerArrived}
+                      variant="tweak"
+                    />
+                  </div>
+
+                  {/* Conveyor belt center */}
+                  <div className="flex-1 min-w-0 h-full max-h-full flex items-center justify-center">
+                    <ConveyorBelt
+                      plates={gameState.beltPlates}
+                      highlightedSlots={beltWarnings}
+                      beltSpeed={gameState.beltSpeed}
+                      variant="tweak"
+                    />
+                  </div>
+
+                  {/* Right seats */}
+                  <div className="flex flex-col gap-1 items-center justify-center shrink-0 h-full">
+                    <CustomerSeat
+                      customer={gameState.customers[2]}
+                      seatIndex={2}
+                      side="right"
+                      onArrived={handleCustomerArrived}
+                      variant="tweak"
+                    />
+                    <CustomerSeat
+                      customer={gameState.customers[3]}
+                      seatIndex={3}
+                      side="right"
+                      onArrived={handleCustomerArrived}
+                      variant="tweak"
+                    />
+                  </div>
                 </div>
-
-                {/* Dinner seats placed with 100% dynamic absolute coordinate offsets alongside coordinates */}
-                {getSeatSlots(tweakNumSeats).map((slotIdx, seatIndex) => {
-                  const customer = gameState.customers[seatIndex];
-                  
-                  // Fetch global relative percentage coordinate of slotIdx on conveyor belt track box
-                  const slotCoord = SLOT_COORDS[slotIdx as keyof typeof SLOT_COORDS] || { x: 50, y: 50 };
-                  const globalX = 25 + (slotCoord.x * 0.5);
-                  const globalY = 30 + (slotCoord.y * 0.4);
-
-                  let leftPercent = globalX;
-                  let topPercent = globalY;
-
-                  // Place offset around belt sides
-                  if (slotIdx === 9 || slotIdx === 10 || slotIdx === 11) {
-                    leftPercent = globalX - 13;
-                    topPercent = globalY;
-                  } else if (slotIdx === 4 || slotIdx === 5 || slotIdx === 6) {
-                    leftPercent = globalX + 13;
-                    topPercent = globalY;
-                  } else if (slotIdx === 7 || slotIdx === 8) {
-                    leftPercent = globalX;
-                    topPercent = globalY - 14;
-                  } else {
-                    leftPercent = globalX;
-                    topPercent = globalY + 14;
-                  }
-
-                  return (
-                    <div 
-                      key={seatIndex}
-                      className="absolute flex flex-col items-center select-none z-10"
-                      style={{
-                        left: `${leftPercent}%`,
-                        top: `${topPercent}%`,
-                        transform: 'translate(-50%, -50%)',
-                        width: '85px',
-                      }}
-                    >
-                      {customer ? (
-                        <div className="bg-[#0c1222] border border-slate-700 rounded-xl p-1 text-center w-full shadow-lg flex flex-col items-center relative gap-[1px]">
-                          {/* Character Name & Status */}
-                          <span className="text-[7px] text-[#60a5fa] font-mono leading-none font-bold uppercase truncate max-w-[70px]">
-                            {customer.characterName}
-                          </span>
-
-                          {/* Customer Emoji */}
-                          <span className="text-xl filter drop-shadow leading-none py-0.5">
-                            {customer.characterEmoji}
-                          </span>
-
-                          {/* Bubble Order */}
-                          <div className="bg-[#050811] border border-slate-800 rounded px-1 py-0.5 flex items-center justify-center gap-1 scale-90">
-                            <span className="text-xs leading-none">
-                              {customer.orderedVariety === 'maguro' && '🍣'}
-                              {customer.orderedVariety === 'california' && '🍥'}
-                              {customer.orderedVariety === 'kappa' && '🥒'}
-                              {customer.orderedVariety === 'tamago' && '🍳'}
-                              {customer.orderedVariety === 'ebi' && '🍤'}
-                              {customer.orderedVariety === 'salmon' && '🐟'}
-                              {customer.orderedVariety === 'unagi' && '🐍'}
-                              {customer.orderedVariety === 'ikura' && '🔴'}
-                              {customer.orderedVariety === 'saba' && '◽'}
-                            </span>
-                            <span className="text-[7.5px] font-bold font-mono text-white leading-none">
-                              {customer.satisfiedCount}/{customer.orderedCount}
-                            </span>
-                          </div>
-
-                          {/* Chewing Progress Bar */}
-                          {customer.state === 'eating' && (
-                            <div className="w-full h-[3px] bg-slate-950 rounded overflow-hidden mt-0.5">
-                              <div 
-                                className="h-full bg-emerald-500 transition-all duration-300"
-                                style={{ width: `${(customer.chopstickTicks / 8) * 100}%` }}
-                              />
-                            </div>
-                          )}
-
-                          {/* Bubble status tag */}
-                          <span className={`text-[5.5px] font-mono uppercase tracking-widest leading-none px-0.5 py-[1px] rounded mt-0.5 ${
-                            customer.state === 'eating' 
-                              ? 'bg-amber-950/80 text-amber-300' 
-                              : customer.state === 'satisfied'
-                              ? 'bg-emerald-950 text-emerald-300 animate-bounce'
-                              : 'bg-slate-900 text-slate-500'
-                          }`}>
-                            {customer.state}
-                          </span>
-
-                          {/* Plat Stack empty bowls */}
-                          {customer.bowlCount > 0 && (
-                            <div className="absolute -right-2 bottom-1.5 flex flex-col gap-[1px]">
-                              {Array.from({ length: customer.bowlCount }).map((_, bIdx) => (
-                                <div key={bIdx} className="w-2.5 h-[3px] bg-[#d94e33] rounded-t-sm" />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-[#04070d]/50 border border-dashed border-slate-800/60 rounded-xl p-1.5 text-center w-full flex flex-col items-center justify-center opacity-30">
-                          <span className="text-sm">🪑</span>
-                          <span className="text-[5.5px] text-slate-500 font-mono font-extrabold mt-0.5 uppercase tracking-wider">
-                            VACANT_0{seatIndex}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-
               </div>
 
               {/* BOTTOM PANEL CONTROLS: Storage Buffer tray + Dispatch input tracks lanes */}
@@ -1898,9 +1839,27 @@ export default function App() {
                 <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
                   Current Station
                 </span>
-                <h2 className={`text-xl font-serif italic mt-1 font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-[#d94e33]'}`}>
-                  {gameMode === 'zen' ? 'Zen Pond Garden' : `Rush Hour (Lvl.${gameState.level})`}
+                <h2 className={`text-xl font-serif italic mt-1 font-bold text-[#8a5a36]`}>
+                  Zen Pond Garden — Lvl {gameState.level}
                 </h2>
+              </div>
+
+              <div>
+                <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                  KITCHEN SUPPLY
+                </span>
+                <div className={`flex justify-between items-baseline mt-1 text-xs font-mono ${gameMode === 'zen' ? 'text-[#5c3a21]' : 'text-stone-300'}`}>
+                  <span>Dishes Delivered</span>
+                  <span className={`font-bold ${gameMode === 'zen' ? 'text-stone-950 font-extrabold' : 'text-white'}`}>
+                    {gameState.dishesConsumed}/{dishesProgressTarget}
+                  </span>
+                </div>
+                <div className={`h-1 rounded-full overflow-hidden mt-2 ${gameMode === 'zen' ? 'bg-[#eedbc5]/60' : 'bg-stone-900'}`}>
+                  <div 
+                    className={`h-full transition-all duration-400 ${gameMode === 'zen' ? 'bg-[#b5835a]' : 'bg-amber-600'}`}
+                    style={{ width: `${(gameState.dishesConsumed / Math.max(1, dishesProgressTarget)) * 100}%` }}
+                  />
+                </div>
               </div>
 
               <div>
@@ -1913,16 +1872,14 @@ export default function App() {
                     {gameState.customersServed}/{gameState.totalCustomersRequired}
                   </span>
                 </div>
-                {/* Progress bar */}
                 <div className={`h-1 rounded-full overflow-hidden mt-2 ${gameMode === 'zen' ? 'bg-[#eedbc5]/60' : 'bg-stone-900'}`}>
                   <div 
                     className={`h-full transition-all duration-400 ${gameMode === 'zen' ? 'bg-[#8a5a36]' : 'bg-[#d94e33]'}`}
-                    style={{ width: `${(gameState.customersServed / gameState.totalCustomersRequired) * 100}%` }}
+                    style={{ width: `${(gameState.customersServed / Math.max(1, gameState.totalCustomersRequired)) * 100}%` }}
                   />
                 </div>
               </div>
 
-              {/* Dynamic rule boards */}
               <div className={`p-4 rounded-xl text-[10px] font-mono space-y-1.5 leading-relaxed border ${
                 gameMode === 'zen' 
                   ? 'bg-[#fcf5ee] border-[#b5835a]/30 text-[#8a5a36] font-bold shadow-xs' 
@@ -1933,8 +1890,8 @@ export default function App() {
                 </span>
                 <p>• Launch matching color ingredients onto empty bottom slots.</p>
                 <p>• Belt revolves Counter-Clockwise.</p>
-                <p>• Serve stacks to seated customers cleanly.</p>
-                <p>• Reload plates in Leftover Buffer before grid overflows!</p>
+                <p>• Bottom queues start with exactly {dishesProgressTarget} dishes needed (pairs of 2).</p>
+                <p>• Unneeded dishes auto-clear when diners are satisfied.</p>
               </div>
             </div>
 
@@ -2112,11 +2069,12 @@ export default function App() {
                       </motion.div>
                     );
                   })
-                ) : gameState.customersServed >= gameState.totalCustomersRequired ? (
+                ) : gameState.customersServed >= gameState.totalCustomersRequired &&
+                  remainingDemandTotal === 0 ? (
                   <div className={`text-[10.5px] font-mono tracking-wide w-full text-center py-2 italic font-black animate-pulse flex items-center justify-center gap-1.5 ${
                     gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-emerald-400'
                   }`}>
-                    🧹 STATION CLEARING: Empty all bottom lanes and clear the rotating belt to proceed!
+                    ✨ All diners satisfied — closing station...
                   </div>
                 ) : (
                   <div className="text-[10px] font-mono tracking-wide text-stone-500 w-full text-center py-2 italic">
@@ -2245,7 +2203,6 @@ export default function App() {
                 <ConveyorBelt
                   plates={gameState.beltPlates}
                   highlightedSlots={beltWarnings}
-                  lastTickTime={lastTickTime}
                   beltSpeed={gameState.beltSpeed}
                   onPlateClick={(p) => sfx.playError()}
                   onBeltTap={() => {
@@ -2376,7 +2333,7 @@ export default function App() {
                   Belt Speed
                 </span>
                 <span className={`text-[9px] font-mono font-black ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-teal-400'}`}>
-                  {gameState.beltSpeed}ms
+                  {Math.round(gameState.beltSpeed)}ms
                 </span>
               </div>
               <input
@@ -2384,19 +2341,14 @@ export default function App() {
                 min="200"
                 max="2000"
                 step="50"
-                value={gameMode === 'zen' ? zenBaseBeltSpeed : classicBaseBeltSpeed}
+                value={zenBaseBeltSpeed}
                 onChange={(e) => {
                   const spd = parseInt(e.target.value, 10);
-                  if (gameMode === 'zen') {
-                    setZenBaseBeltSpeed(spd);
-                    setGameState((prev) => ({
-                      ...prev,
-                      beltSpeed: Math.min(prev.beltSpeed, spd),
-                    }));
-                  } else {
-                    setClassicBaseBeltSpeed(spd);
-                    setGameState((prev) => ({ ...prev, beltSpeed: spd }));
-                  }
+                  setZenBaseBeltSpeed(spd);
+                  setGameState((prev) => ({
+                    ...prev,
+                    beltSpeed: Math.min(prev.beltSpeed, spd),
+                  }));
                 }}
                 className={`w-full h-1 rounded-lg appearance-none cursor-pointer ${gameMode === 'zen' ? 'accent-[#8a5a36] bg-[#eedbc5]/60' : 'accent-teal-500 bg-stone-900'}`}
               />
@@ -2409,6 +2361,36 @@ export default function App() {
                   Tap the pond to turbo; speed decays back to this baseline.
                 </p>
               )}
+            </div>
+
+            {/* Eating speed — Zen runtime tweak */}
+            <div className={`space-y-1.5 pt-4 border-t ${gameMode === 'zen' ? 'border-[#b5835a]/20' : 'border-[#222]'}`}>
+              <div className="flex justify-between items-center">
+                <span className={`text-[10px] font-mono tracking-[0.1em] uppercase block font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-500'}`}>
+                  Eating Speed
+                </span>
+                <span className={`text-[9px] font-mono font-black ${gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-amber-400'}`}>
+                  {zenTimeToEat}ms
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="3000"
+                step="10"
+                value={zenTimeToEat}
+                onChange={(e) => {
+                  setZenTimeToEat(parseInt(e.target.value, 10));
+                }}
+                className={`w-full h-1 rounded-lg appearance-none cursor-pointer ${gameMode === 'zen' ? 'accent-[#8a5a36] bg-[#eedbc5]/60' : 'accent-amber-500 bg-stone-900'}`}
+              />
+              <div className={`flex justify-between text-[7px] font-mono uppercase font-bold ${gameMode === 'zen' ? 'text-[#8a5a36]/60' : 'text-stone-600'}`}>
+                <span>Instant (0)</span>
+                <span>Slow (3000)</span>
+              </div>
+              <p className="text-[8px] font-mono text-[#8a5a36]/70 leading-snug">
+                Delay per bite while chopsticks animate. Applies immediately to new bites.
+              </p>
             </div>
 
             {/* Upgrades panel in dark custom flat wrapper */}

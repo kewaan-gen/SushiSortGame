@@ -168,7 +168,7 @@ export const QueueDispenser: React.FC<QueueDispenserProps> = ({
                 <div className="absolute top-2 flex flex-col items-center z-10 pointer-events-none">
                   <ChevronUp
                     className={`w-3.5 h-3.5 -mb-1 select-none pointer-events-none ${
-                      isBlocked ? 'text-red-500 animate-pulse' : 'text-emerald-500 animate-bounce'
+                      isBlocked ? 'text-red-500 animate-pulse' : 'text-emerald-500'
                     }`}
                   />
                   <span
@@ -282,7 +282,7 @@ export const QueueDispenser: React.FC<QueueDispenserProps> = ({
               <div className="absolute top-2 flex flex-col items-center z-10 pointer-events-none">
                 <ChevronUp
                   className={`w-3 h-3 -mb-0.5 select-none pointer-events-none ${
-                    isBlocked ? 'text-[#d94e33] animate-pulse' : 'text-stone-400 animate-bounce'
+                    isBlocked ? 'text-[#d94e33] animate-pulse' : 'text-stone-400'
                   }`}
                 />
                 <span

@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.5
  */
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plate } from '../types';
 import { SushiPlate } from './SushiPlate';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 // Coordinates matching Counter-Clockwise progression around the loop (0 to 11)
 export const SLOT_COORDS: Record<number, { x: number; y: number }> = {
@@ -36,7 +36,6 @@ interface ConveyorBeltProps {
   plates: Plate[];
   onPlateClick?: (plate: Plate) => void;
   highlightedSlots?: number[];
-  lastTickTime: number;
   beltSpeed: number;
   variant?: 'classic' | 'zen' | 'tweak';
   onBeltTap?: () => void;
@@ -116,6 +115,115 @@ const SlotGuide: React.FC<SlotGuideProps> = ({ idx, coord, isHighlighted, isOccu
   );
 };
 
+/** Map a continuous path value (float slot index) to belt coordinates via smooth lerp */
+function interpolateAlongBelt(pathProgress: number): { x: number; y: number } {
+  const wrapped = ((pathProgress % 12) + 12) % 12;
+  const idx = Math.floor(wrapped) % 12;
+  const nextIdx = (idx + 1) % 12;
+  const t = wrapped - idx;
+  const a = SLOT_COORDS[idx];
+  const b = SLOT_COORDS[nextIdx];
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+  };
+}
+
+/** Single rAF loop per plate: uninterrupted CCW glide + spin */
+const BeltPlateItem: React.FC<{
+  plate: Plate;
+  beltSpeed: number;
+  plateSize: number;
+  variant: 'classic' | 'zen' | 'tweak';
+  onPlateClick?: (plate: Plate) => void;
+}> = ({ plate, beltSpeed, plateSize, variant, onPlateClick }) => {
+  const originSlot = plate.injectedSlot >= 0 ? plate.injectedSlot : plate.currentSlot;
+  const startCoord = interpolateAlongBelt(originSlot);
+
+  const outerRef = useRef<HTMLDivElement>(null);
+  const spinRef = useRef<HTMLDivElement>(null);
+  const animState = useRef({
+    angle: Math.random() * -360,
+    lastTime: 0,
+    pathProgress: originSlot,
+    degPerSec: 360 / ((beltSpeed / 1000) * 12),
+    beltSpeed,
+  });
+
+  useEffect(() => {
+    animState.current.beltSpeed = beltSpeed;
+    animState.current.degPerSec = 360 / ((beltSpeed / 1000) * 12);
+  }, [beltSpeed]);
+
+  // Reset path only when plate enters or re-enters the belt (dispatch / buffer reload)
+  useEffect(() => {
+    const slot = plate.injectedSlot >= 0 ? plate.injectedSlot : plate.currentSlot;
+    animState.current.pathProgress = slot;
+    animState.current.lastTime = 0;
+    const { x, y } = interpolateAlongBelt(slot);
+    if (outerRef.current) {
+      outerRef.current.style.left = `${x}%`;
+      outerRef.current.style.top = `${y}%`;
+    }
+  }, [plate.id, plate.spawnTime, plate.injectedSlot]);
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = (now: number) => {
+      const state = animState.current;
+      if (!state.lastTime) state.lastTime = now;
+      const dt = Math.min((now - state.lastTime) / 1000, 0.032);
+      state.lastTime = now;
+
+      state.angle -= state.degPerSec * dt;
+      state.pathProgress += (dt * 1000) / state.beltSpeed;
+
+      const { x, y } = interpolateAlongBelt(state.pathProgress);
+
+      if (outerRef.current) {
+        outerRef.current.style.left = `${x}%`;
+        outerRef.current.style.top = `${y}%`;
+      }
+      if (spinRef.current) {
+        spinRef.current.style.transform = `rotate(${state.angle}deg)`;
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [plate.id, plate.spawnTime]);
+
+  return (
+    <div
+      ref={outerRef}
+      className="absolute pointer-events-auto cursor-pointer"
+      style={{
+        zIndex: 25,
+        left: `${startCoord.x}%`,
+        top: `${startCoord.y}%`,
+        transform: 'translate(-50%, -50%)',
+        willChange: 'left, top',
+      }}
+    >
+      <div
+        ref={spinRef}
+        style={{ width: plateSize, height: plateSize, willChange: 'transform' }}
+      >
+        <div className="w-full h-full hover:scale-110 transition-transform duration-200">
+          <SushiPlate
+            variety={plate.variety}
+            count={plate.count}
+            size={plateSize}
+            variant={variant}
+            onClick={() => onPlateClick?.(plate)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface BeltPlatesOverlayProps {
   plates: Plate[];
   beltSpeed: number;
@@ -130,59 +238,25 @@ const BeltPlatesOverlay: React.FC<BeltPlatesOverlayProps> = ({
   plateSize,
   variant,
   onPlateClick,
-}) => {
-  const seenSlots = new Set<number>();
-  const uniquePlates = plates.filter((plate) => {
-    if (seenSlots.has(plate.currentSlot)) return false;
-    seenSlots.add(plate.currentSlot);
-    return true;
-  });
-
-  const transitionDuration = beltSpeed / 1000;
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <AnimatePresence>
-        {uniquePlates.map((plate) => {
-          const coordCurr = SLOT_COORDS[plate.currentSlot];
-          if (!coordCurr) return null;
-
-          return (
-            <motion.div
-              key={plate.id}
-              layout={false}
-              animate={{
-                left: `${coordCurr.x}%`,
-                top: `${coordCurr.y}%`,
-              }}
-              transition={{
-                type: 'tween',
-                ease: 'linear',
-                duration: transitionDuration,
-              }}
-              style={{ zIndex: 25 }}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer transition-transform hover:scale-110 duration-200"
-            >
-              <SushiPlate
-                variety={plate.variety}
-                count={plate.count}
-                size={plateSize}
-                variant={variant}
-                onClick={() => onPlateClick?.(plate)}
-              />
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-    </div>
-  );
-};
+}) => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {plates.map((plate) => (
+      <BeltPlateItem
+        key={`${plate.id}-${plate.spawnTime ?? 0}`}
+        plate={plate}
+        beltSpeed={beltSpeed}
+        plateSize={plateSize}
+        variant={variant}
+        onPlateClick={onPlateClick}
+      />
+    ))}
+  </div>
+);
 
 export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({
   plates = [],
   onPlateClick,
   highlightedSlots = [],
-  lastTickTime,
   beltSpeed,
   variant = 'classic',
   onBeltTap,
@@ -204,11 +278,6 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({
     return () => observer.disconnect();
   }, [updatePlateSize]);
 
-  const safePlates = plates || [];
-  const beltSlots = Array.from({ length: 12 }).map((_, idx) => {
-    return safePlates.find((p) => p.currentSlot === idx) || null;
-  });
-
   const slotGuides = Object.entries(SLOT_COORDS).map(([idxStr, coord]) => {
     const idx = parseInt(idxStr, 10);
     return (
@@ -217,11 +286,13 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({
         idx={idx}
         coord={coord}
         isHighlighted={highlightedSlots.includes(idx)}
-        isOccupied={!!beltSlots[idx]}
+        isOccupied={false}
         variant={variant}
       />
     );
   });
+
+  const safePlates = plates || [];
 
   const platesOverlay = (
     <BeltPlatesOverlay
@@ -279,13 +350,13 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({
         onClick={() => onBeltTap?.()}
       >
         <div className="absolute inset-1 border-[4px] border-[#7f5539] rounded-[42px] overflow-hidden bg-[#e6ccb2] shadow-inner">
+          {/* Static wooden deck texture — motion is on belt plates only */}
           <div
-            className="absolute inset-0 opacity-25 animate-belt-running"
+            className="absolute inset-0 opacity-20"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M0,20 Q10,0 20,20 Q30,0 40,20 L40,40 L0,40 Z' fill='%239a7b56' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'repeat',
-              '--belt-duration': `${beltSpeed / 1000}s`,
-            } as React.CSSProperties}
+            }}
           />
           <div
             className="absolute inset-[15%] border-[3px] border-[#7f5539] rounded-[24px] overflow-hidden bg-[#cbf3f0] shadow-2xl flex items-center justify-center"
@@ -380,11 +451,10 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({
     >
       <div className="absolute inset-1.5 border-[4px] border-[#1d1d1d] rounded-[28px] overflow-hidden bg-[#121212] shadow-inner">
         <div
-          className="absolute inset-0 opacity-10 animate-belt-running"
+          className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: 'repeating-linear-gradient(90deg, #000, #000 6px, transparent 6px, transparent 18px)',
-            '--belt-duration': `${beltSpeed / 1000}s`,
-          } as React.CSSProperties}
+          }}
         />
         <div className="absolute inset-[15%] bg-[#1d1d1d] border-2 border-[#2c2c2c] rounded-[18px] shadow-lg flex flex-col items-center justify-center">
           <div className="text-center">
