@@ -57,6 +57,7 @@ export const FreeBuffer: React.FC<FreeBufferProps> = ({
             return (
               <div
                 key={idx}
+                data-buffer-slot={idx}
                 className={`relative h-[52px] rounded-lg flex items-center justify-center transition-all duration-250 ${
                   plate
                     ? 'bg-[#0a0f1d] border-2 border-[#10b981]'
@@ -65,7 +66,6 @@ export const FreeBuffer: React.FC<FreeBufferProps> = ({
               >
                 {plate ? (
                   <motion.div
-                    layoutId={plate.id}
                     className="cursor-pointer"
                     onClick={() => onBufferPlateClick(plate, idx)}
                     whileHover={{ scale: 1.1 }}
@@ -127,6 +127,7 @@ export const FreeBuffer: React.FC<FreeBufferProps> = ({
             return (
               <div
                 key={idx}
+                data-buffer-slot={idx}
                 className="relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300"
                 style={{
                   // Realistic wooden circles with depth
@@ -140,7 +141,6 @@ export const FreeBuffer: React.FC<FreeBufferProps> = ({
 
                 {plate ? (
                   <motion.div
-                    layoutId={plate.id}
                     className="cursor-pointer z-10"
                     onClick={() => onBufferPlateClick(plate, idx)}
                     whileHover={{ scale: 1.15 }}
@@ -205,6 +205,7 @@ export const FreeBuffer: React.FC<FreeBufferProps> = ({
           return (
             <div
               key={idx}
+              data-buffer-slot={idx}
               className={`relative h-[60px] rounded-xl flex items-center justify-center transition-all duration-200 ${
                 plate
                   ? 'bg-[#121212] border border-[#d94e33]/40'
@@ -213,7 +214,6 @@ export const FreeBuffer: React.FC<FreeBufferProps> = ({
             >
               {plate ? (
                 <motion.div
-                  layoutId={plate.id}
                   className="cursor-pointer"
                   onClick={() => onBufferPlateClick(plate, idx)}
                   whileHover={{ scale: 1.08 }}

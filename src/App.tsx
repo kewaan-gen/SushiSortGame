@@ -10,9 +10,14 @@ import { CustomerSeat } from './components/CustomerSeat';
 import { ConveyorBelt } from './components/ConveyorBelt';
 import { FreeBuffer } from './components/FreeBuffer';
 import { QueueDispenser } from './components/QueueDispenser';
+import { PlateTransferOverlay, PlateTransferFlight } from './components/PlateTransferOverlay';
 import { SushiPlate } from './components/SushiPlate';
 import { MainMenu } from './components/MainMenu';
 import { sfx } from './utils/audio';
+import {
+  getElementCenterInPlayfield,
+  getBeltSlotCenterInPlayfield,
+} from './utils/plateAnchors';
 import { 
   Volume2, 
   VolumeX, 
@@ -328,6 +333,12 @@ export default function App() {
   const [showAdSpinner, setShowAdSpinner] = useState(false);
   const beltSpeedRef = useRef(gameState.beltSpeed);
   beltSpeedRef.current = gameState.beltSpeed;
+
+  const platePlayfieldRef = useRef<HTMLDivElement>(null);
+  const transferHandlersRef = useRef<Map<string, () => void>>(new Map());
+  const reservedDockSlotsRef = useRef<Set<number>>(new Set());
+  const inflightBeltSlotsRef = useRef<Set<number>>(new Set());
+  const [activeTransfers, setActiveTransfers] = useState<PlateTransferFlight[]>([]);
   
   const [gameMode, setGameMode] = useState<'menu' | 'zen' | 'tweak'>('menu');
   const [isSimPaused, setIsSimPaused] = useState(false);
@@ -453,7 +464,9 @@ export default function App() {
   const [activeCustomLevel, setActiveCustomLevel] = useState<any | null>(null);
 
   // TWEAK / SANDBOX SIMULATIVE HELPERS & ACTION HANDLERS
-  const isBeltSlotOccupied = (slotIdx: number) => gameState.beltPlates.some((p) => p.currentSlot === slotIdx);
+  const isBeltSlotOccupied = (slotIdx: number) =>
+    gameState.beltPlates.some((p) => p.currentSlot === slotIdx) ||
+    inflightBeltSlotsRef.current.has(slotIdx);
 
   // Dynamically computed total target dishes required in real-time
   const totalPerDish: Record<number, number> = {};
@@ -784,7 +797,66 @@ export default function App() {
   };
 
   // Main ticking logic: moves plates anti-clockwise and resolves overflows/matches
+  const plateAnimVariant = (): 'classic' | 'zen' | 'tweak' =>
+    gameMode === 'tweak' ? 'tweak' : gameMode === 'zen' ? 'zen' : 'classic';
+
+  const plateAnimSize = (context: 'queue' | 'belt' | 'dock') => {
+    const variant = plateAnimVariant();
+    if (context === 'queue') return variant === 'zen' ? 48 : variant === 'tweak' ? 34 : 38;
+    if (context === 'belt') return variant === 'zen' ? 40 : variant === 'tweak' ? 32 : 36;
+    return variant === 'zen' ? 42 : variant === 'tweak' ? 34 : 38;
+  };
+
+  const runPlateTransfer = (flight: PlateTransferFlight, onComplete: () => void) => {
+    transferHandlersRef.current.set(flight.key, onComplete);
+    setActiveTransfers((prev) => [...prev, flight]);
+  };
+
+  const handleTransferComplete = (key: string) => {
+    setActiveTransfers((prev) => prev.filter((t) => t.key !== key));
+    const handler = transferHandlersRef.current.get(key);
+    transferHandlersRef.current.delete(key);
+    handler?.();
+  };
+
+  const startBeltToDockTransfer = (plate: Plate, dockIdx: number, fromSlot: number) => {
+    const playfield = platePlayfieldRef.current;
+    const beltFrame = document.getElementById('conveyor-belt-frame');
+    const dockEl = playfield?.querySelector(`[data-buffer-slot="${dockIdx}"]`);
+
+    const finishDock = () => {
+      reservedDockSlotsRef.current.delete(dockIdx);
+      setGameState((prev) => {
+        const newFreeSlots = [...prev.freeSlots];
+        newFreeSlots[dockIdx] = plate;
+        return { ...prev, freeSlots: newFreeSlots };
+      });
+    };
+
+    reservedDockSlotsRef.current.add(dockIdx);
+
+    if (!playfield || !beltFrame || !dockEl) {
+      finishDock();
+      return;
+    }
+
+    runPlateTransfer(
+      {
+        key: `b2d-${plate.id}-${Date.now()}`,
+        variety: plate.variety,
+        count: plate.count,
+        from: getBeltSlotCenterInPlayfield(playfield, beltFrame, fromSlot),
+        to: getElementCenterInPlayfield(playfield, dockEl as HTMLElement),
+        size: plateAnimSize('belt'),
+        variant: plateAnimVariant(),
+      },
+      finishDock,
+    );
+  };
+
   const tickConveyorBelt = () => {
+    let pendingDockTransfers: { plate: Plate; dockIdx: number; fromSlot: number }[] = [];
+
     setGameState((prev) => {
       if (prev.isGameOver) return prev;
 
@@ -825,15 +897,18 @@ export default function App() {
         // Find left-most available slot inside active array bounds
         let foundIndex = -1;
         for (let i = 0; i < maxSlots; i++) {
-          if (newFreeSlots[i] === null) {
+          if (newFreeSlots[i] === null && !reservedDockSlotsRef.current.has(i)) {
             foundIndex = i;
             break;
           }
         }
 
         if (foundIndex !== -1) {
-          newFreeSlots[foundIndex] = p;
-          // Play slide alert
+          pendingDockTransfers.push({
+            plate: p,
+            dockIdx: foundIndex,
+            fromSlot: p.injectedSlot >= 0 ? p.injectedSlot : 0,
+          });
           sfx.playError();
         } else {
           // No free slots! Instant fail state!
@@ -901,6 +976,14 @@ export default function App() {
         customers: updatedCustomers,
       });
     });
+
+    if (pendingDockTransfers.length > 0) {
+      queueMicrotask(() => {
+        pendingDockTransfers.forEach(({ plate, dockIdx, fromSlot }) => {
+          startBeltToDockTransfer(plate, dockIdx, fromSlot);
+        });
+      });
+    }
   };
 
   // Handles customer arrival transition to waiting
@@ -1081,37 +1164,8 @@ export default function App() {
   };
 
   // Dispatch the frontline item from a dispenser queue
-  const handleDispatchQueue = (queueIdx: number) => {
-    const targetSlotIdx = queueIdx; // Column 0 -> Slot 0, Column 1 -> Slot 1, Column 2 -> Slot 2
-
-    // Check if slot is occupied
-    const occupied = gameState.beltPlates.some((p) => p.currentSlot === targetSlotIdx);
-    if (occupied) {
-      sfx.playError();
-      setBeltWarnings([targetSlotIdx]);
-      setTimeout(() => setBeltWarnings([]), 800);
-      return;
-    }
-
-    sfx.playDispatch();
-
+  const finishDispatchToBelt = (dispatchedPlate: Plate, targetSlotIdx: number) => {
     setGameState((prev) => {
-      const queueList = prev.queues[queueIdx];
-      if (!queueList || queueList.length === 0) return prev;
-
-      const dispatchedPlate = {
-        ...queueList[0],
-        currentSlot: targetSlotIdx,
-        injectedSlot: targetSlotIdx,
-        stepsTaken: 0,
-        spawnTime: Date.now(),
-      };
-
-      // Shift queue up without adding new elements (finite pieces under Law of System Balance)
-      const updatedColList = queueList.slice(1);
-      const queueOverride = prev.queues.map((col, cIdx) => (cIdx === queueIdx ? updatedColList : col));
-
-      // Check for instant feeding match with customer seats [Seat 0 -> Slot 10, Seat 1 -> Slot 11, Seat 2 -> Slot 5, Seat 3 -> Slot 4]
       const seatSlots = gameMode === 'tweak' ? getSeatSlots(tweakNumSeats) : [10, 11, 5, 4];
       const updatedCustomers = prev.customers.map((c) => (c ? { ...c } : null));
       let isInstantEaten = false;
@@ -1134,22 +1188,86 @@ export default function App() {
         }
       }
 
-      // Dispatch without altering belt speed — keeps tick interval & motion smooth
       return {
         ...prev,
-        queues: queueOverride,
         beltPlates: isInstantEaten ? prev.beltPlates : [...prev.beltPlates, dispatchedPlate],
         customers: updatedCustomers,
       };
     });
   };
 
+  const handleDispatchQueue = (queueIdx: number) => {
+    const targetSlotIdx = queueIdx;
+
+    const occupied = isBeltSlotOccupied(targetSlotIdx);
+    if (occupied) {
+      sfx.playError();
+      setBeltWarnings([targetSlotIdx]);
+      setTimeout(() => setBeltWarnings([]), 800);
+      return;
+    }
+
+    const queueList = gameState.queues[queueIdx];
+    if (!queueList || queueList.length === 0) return;
+
+    const plate = queueList[0];
+    const dispatchedPlate = {
+      ...queueList[0],
+      currentSlot: targetSlotIdx,
+      injectedSlot: targetSlotIdx,
+      stepsTaken: 0,
+      spawnTime: Date.now(),
+    };
+
+    const updatedColList = queueList.slice(1);
+    const queueOverride = gameState.queues.map((col, cIdx) => (cIdx === queueIdx ? updatedColList : col));
+
+    sfx.playDispatch();
+
+    const playfield = platePlayfieldRef.current;
+    const beltFrame = document.getElementById('conveyor-belt-frame');
+    const queueEl = playfield?.querySelector(`[data-queue-dispatch="${queueIdx}"]`);
+
+    if (!playfield || !beltFrame || !queueEl) {
+      inflightBeltSlotsRef.current.add(targetSlotIdx);
+      setGameState((prev) => ({
+        ...prev,
+        queues: queueOverride,
+        beltPlates: [...prev.beltPlates, dispatchedPlate],
+      }));
+      inflightBeltSlotsRef.current.delete(targetSlotIdx);
+      return;
+    }
+
+    inflightBeltSlotsRef.current.add(targetSlotIdx);
+
+    setGameState((prev) => ({
+      ...prev,
+      queues: queueOverride,
+    }));
+
+    runPlateTransfer(
+      {
+        key: `q2b-${plate.id}-${Date.now()}`,
+        variety: plate.variety,
+        count: plate.count,
+        from: getElementCenterInPlayfield(playfield, queueEl as HTMLElement),
+        to: getBeltSlotCenterInPlayfield(playfield, beltFrame, targetSlotIdx),
+        size: plateAnimSize('queue'),
+        variant: plateAnimVariant(),
+      },
+      () => {
+        inflightBeltSlotsRef.current.delete(targetSlotIdx);
+        finishDispatchToBelt(dispatchedPlate, targetSlotIdx);
+      },
+    );
+  };
+
   // Reload an item from the free buffer tray back onto the conveyor belt
   const handleBufferPlateClick = (plate: Plate, slotIdx: number) => {
-    const returnSlotIdx = 1; // Slot 1 is the return lane (bottom center-left)
+    const returnSlotIdx = 1;
 
-    // Verify if return zone is unoccupied
-    const occupied = gameState.beltPlates.some((p) => p.currentSlot === returnSlotIdx);
+    const occupied = isBeltSlotOccupied(returnSlotIdx);
     if (occupied) {
       sfx.playError();
       setBeltWarnings([returnSlotIdx]);
@@ -1160,24 +1278,57 @@ export default function App() {
 
     sfx.playDispatch();
 
+    const returnedPlate = {
+      ...plate,
+      currentSlot: returnSlotIdx,
+      injectedSlot: returnSlotIdx,
+      stepsTaken: 0,
+      spawnTime: Date.now(),
+    };
+
+    const playfield = platePlayfieldRef.current;
+    const beltFrame = document.getElementById('conveyor-belt-frame');
+    const dockEl = playfield?.querySelector(`[data-buffer-slot="${slotIdx}"]`);
+
+    if (!playfield || !beltFrame || !dockEl) {
+      setGameState((prev) => {
+        const newFreeSlots = [...prev.freeSlots];
+        newFreeSlots[slotIdx] = null;
+        return {
+          ...prev,
+          freeSlots: newFreeSlots,
+          beltPlates: [...prev.beltPlates, returnedPlate],
+        };
+      });
+      return;
+    }
+
+    inflightBeltSlotsRef.current.add(returnSlotIdx);
+
     setGameState((prev) => {
       const newFreeSlots = [...prev.freeSlots];
-      newFreeSlots[slotIdx] = null; // take out of buffer slot
-
-      const returnedPlate = {
-        ...plate,
-        currentSlot: returnSlotIdx,
-        injectedSlot: returnSlotIdx,
-        stepsTaken: 0, // Fresh rotational start
-        spawnTime: Date.now(),
-      };
-
-      return {
-        ...prev,
-        freeSlots: newFreeSlots,
-        beltPlates: [...prev.beltPlates, returnedPlate],
-      };
+      newFreeSlots[slotIdx] = null;
+      return { ...prev, freeSlots: newFreeSlots };
     });
+
+    runPlateTransfer(
+      {
+        key: `d2b-${plate.id}-${Date.now()}`,
+        variety: plate.variety,
+        count: plate.count,
+        from: getElementCenterInPlayfield(playfield, dockEl as HTMLElement),
+        to: getBeltSlotCenterInPlayfield(playfield, beltFrame, returnSlotIdx),
+        size: plateAnimSize('dock'),
+        variant: plateAnimVariant(),
+      },
+      () => {
+        inflightBeltSlotsRef.current.delete(returnSlotIdx);
+        setGameState((prev) => ({
+          ...prev,
+          beltPlates: [...prev.beltPlates, returnedPlate],
+        }));
+      },
+    );
   };
 
   // Buy extra fifth slot via coins
@@ -1225,6 +1376,10 @@ export default function App() {
       }
     }
     const lData = initializeLevelData(1);
+    transferHandlersRef.current.clear();
+    reservedDockSlotsRef.current.clear();
+    inflightBeltSlotsRef.current.clear();
+    setActiveTransfers([]);
     setGameState({
       score: 0,
       coins: 100,
@@ -1722,6 +1877,11 @@ export default function App() {
               </div>
 
               {/* MAIN CONTENT AREA: Conveyor, Plates and Seats */}
+              <div
+                ref={platePlayfieldRef}
+                id="plate-playfield"
+                className="relative flex-1 min-h-0 w-full flex flex-col justify-end"
+              >
               <div className="flex-1 min-h-0 w-full flex items-center justify-center py-1">
                 <div className="flex items-center justify-center gap-1.5 w-full h-full max-h-[min(38vh,220px)] px-1">
                   {/* Left seats */}
@@ -1743,7 +1903,7 @@ export default function App() {
                   </div>
 
                   {/* Conveyor belt center */}
-                  <div className="flex-1 min-w-0 h-full max-h-full flex items-center justify-center">
+                  <div id="conveyor-belt-frame" className="flex-1 min-w-0 h-full max-h-full flex items-center justify-center">
                     <ConveyorBelt
                       plates={gameState.beltPlates}
                       highlightedSlots={beltWarnings}
@@ -1798,11 +1958,15 @@ export default function App() {
                   />
                 </div>
               </div>
-
+              <PlateTransferOverlay
+                transfers={activeTransfers}
+                onComplete={handleTransferComplete}
+              />
             </div>
 
           </div>
 
+        </div>
         </div>
       ) : (
         <div 
@@ -2032,33 +2196,36 @@ export default function App() {
                 {gameState.levelCustomersTemplates.slice(gameState.nextCustomerIndex, gameState.nextCustomerIndex + 4).length > 0 ? (
                   gameState.levelCustomersTemplates.slice(gameState.nextCustomerIndex, gameState.nextCustomerIndex + 4).map((tmpl, idx) => {
                     const varietyConfig = SUSHI_VARIETIES[tmpl.orderedVariety];
-                    const color = varietyConfig?.colorCode || '#ef4444';
                     return (
                       <motion.div
                         key={`upcoming-${idx}-${tmpl.characterName}`}
                         initial={{ opacity: 0, x: 15 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`flex items-center gap-2 px-2.5 py-1 rounded-xl text-xs font-serif ${
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-serif ${
                           gameMode === 'zen'
                             ? 'bg-[#fcf5ee] border border-[#e6ccb2]/45 text-stone-900 font-bold'
                             : 'bg-[#121212] border border-stone-800 text-[#fafaf9]'
                         }`}
                       >
                         <span className="text-base leading-none select-none filter drop-shadow">{tmpl.characterEmoji}</span>
-                        <div className="flex flex-col text-left leading-none justify-center">
-                          <span className={`text-[8px] font-mono font-bold leading-none ${
-                            gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-400'
-                          }`}>
-                            {tmpl.characterName}
-                          </span>
-                          <div className="flex items-center gap-1 mt-0.5 leading-none">
-                            <span 
-                              className="w-1.5 h-1.5 rounded-full inline-block shrink-0 animate-pulse" 
-                              style={{ backgroundColor: color }} 
-                              title={varietyConfig?.displayName}
-                            />
-                            <span className="text-[9px] font-mono leading-none font-bold" style={{ color: color }}>
-                              {varietyConfig?.displayName} × {tmpl.orderedCount}
+                        <div className="flex items-center gap-2">
+                          <SushiPlate
+                            variety={tmpl.orderedVariety}
+                            count={1}
+                            size={gameMode === 'zen' ? 30 : 26}
+                            active={false}
+                            variant={gameMode === 'tweak' ? 'tweak' : 'classic'}
+                          />
+                          <div className="flex flex-col text-left leading-none justify-center">
+                            <span className={`text-[8px] font-mono font-bold leading-none ${
+                              gameMode === 'zen' ? 'text-[#8a5a36]' : 'text-stone-400'
+                            }`}>
+                              {tmpl.characterName}
+                            </span>
+                            <span className={`text-[10px] font-mono leading-none font-black mt-0.5 ${
+                              gameMode === 'zen' ? 'text-[#5c3a21]' : 'text-indigo-300'
+                            }`}>
+                              × {tmpl.orderedCount}
                             </span>
                           </div>
                         </div>
@@ -2170,6 +2337,11 @@ export default function App() {
             </div>
 
             {/* THE CONVEYOR & DINERS LAYOUT (Left seat, Conveyor, Right seat) */}
+            <div
+              ref={platePlayfieldRef}
+              id="plate-playfield"
+              className="relative flex flex-col gap-2 shrink-0 min-h-0"
+            >
             <div id="game-stage" className="game-stage w-full min-h-0 flex-1">
               <div className="w-full max-h-full flex items-center justify-center min-h-0 max-w-full px-0.5">
             <div id="diners-conveyor-wrapper" className={`flex items-center justify-center gap-0.5 w-full max-h-full relative overflow-hidden transition-colors duration-500 ${
@@ -2265,9 +2437,14 @@ export default function App() {
             <QueueDispenser
               queues={gameState.queues}
               onDispatch={handleDispatchQueue}
-              isBeltSlotOccupied={(slotIdx) => gameState.beltPlates.some((p) => p.currentSlot === slotIdx)}
+              isBeltSlotOccupied={isBeltSlotOccupied}
               variant={gameMode}
               activeCustomerVarieties={gameState.customers.filter((c) => c && c.state === 'waiting').map((c) => c!.orderedVariety)}
+            />
+            </div>
+            <PlateTransferOverlay
+              transfers={activeTransfers}
+              onComplete={handleTransferComplete}
             />
             </div>
           </div>

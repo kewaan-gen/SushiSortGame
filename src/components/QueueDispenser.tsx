@@ -88,6 +88,7 @@ export const QueueDispenser: React.FC<QueueDispenserProps> = ({
                         <motion.div
                            key={plate.id}
                            layout
+                           data-queue-dispatch={isFront ? colIdx : undefined}
                            initial={{ opacity: 0, y: 15 }}
                            animate={{ opacity: 1, y: 0 }}
                            exit={{ opacity: 0, scale: 0.8 }}
@@ -204,6 +205,7 @@ export const QueueDispenser: React.FC<QueueDispenserProps> = ({
                         <motion.div
                           key={plate.id}
                           layout
+                          data-queue-dispatch={isFront ? colIdx : undefined}
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.8 }}
@@ -318,6 +320,7 @@ export const QueueDispenser: React.FC<QueueDispenserProps> = ({
                       <motion.div
                         key={plate.id}
                         layout
+                        data-queue-dispatch={isFront ? colIdx : undefined}
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8 }}

@@ -172,6 +172,9 @@ export const CustomerSeat: React.FC<CustomerSeatProps> = ({
     ? 'bg-[#0f172a] border-[#6366f1] text-[#818cf8]' 
     : (variant === 'zen' ? 'bg-[#fffcf8] border-[#9c6644]' : 'bg-[#1c1917] border-[#d94e33]/50');
   const textColour = variant === 'tweak' ? 'text-indigo-400' : (variant === 'zen' ? 'text-[#5c3a21]' : 'text-[#fafaf9]');
+  const orderPlateSize = variant === 'tweak' ? 34 : variant === 'zen' ? 44 : 38;
+  const orderPlateVariant = variant === 'tweak' ? 'tweak' : 'classic';
+  const remainingLabel = Math.max(0, remainingCount);
 
   // In and out trajectories relative to top unified Shoji entryway
   const entryX = side === 'left' ? 42 : -42;
@@ -186,52 +189,52 @@ export const CustomerSeat: React.FC<CustomerSeatProps> = ({
         {customer && customer.state !== 'arriving' && customer.state !== 'leaving' && desiredSushi && (
           <motion.div
             key={customer.id + '-' + customer.satisfiedCount}
-            initial={{ scale: 0, opacity: 0, y: 15 }}
+            initial={{ scale: 0, opacity: 0, y: 18 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0, opacity: 0, y: -10 }}
-            className={`absolute -top-12 flex flex-col items-center justify-center border py-0.5 px-1.5 rounded-xl shadow-lg z-25 w-[76px] sm:w-[82px] ${bubbleBg} ${
-              side === 'left' ? '-left-1' : '-right-1'
-            }`}
+            className={`absolute -top-[4.25rem] sm:-top-[4.75rem] flex flex-col items-center justify-center border-2 py-1.5 px-2 rounded-2xl shadow-xl z-30 w-[5.5rem] sm:w-[6rem] ${bubbleBg} ${
+              side === 'left' ? '-left-2' : '-right-2'
+            } ${customer.state === 'waiting' ? (variant === 'zen' ? 'ring-2 ring-amber-400/70 ring-offset-2 ring-offset-[#fffcf8]' : 'ring-2 ring-amber-400/70 ring-offset-1') : ''}`}
           >
             {/* Triangular anchor below bubble */}
             <div 
-              className={`absolute -bottom-1 w-1.5 h-1.5 border-r border-b rotate-45 ${
+              className={`absolute -bottom-1.5 w-2.5 h-2.5 border-r-2 border-b-2 rotate-45 ${
                 variant === 'tweak' ? 'bg-[#0f172a] border-[#6366f1]' : (variant === 'zen' ? 'bg-[#fffcf8] border-[#9c6644]' : 'bg-[#1c1917] border-[#d94e33]/50')
               } ${
-                side === 'left' ? 'left-4' : 'right-4'
+                side === 'left' ? 'left-5' : 'right-5'
               }`} 
             />
 
-            <div className="flex items-center gap-1">
-              {variant === 'zen' ? (
-                <>
-                  <span
-                    className="w-2 h-2 rounded-full inline-block shrink-0"
-                    style={{ backgroundColor: desiredSushi.colorCode }}
-                  />
-                  <span className="text-[8px] font-extrabold font-mono text-[#8a5a36]">
-                    {Math.max(0, remainingCount)}x {desiredSushi.displayName}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <SushiPlate
-                    variety={customer.orderedVariety}
-                    count={1}
-                    size={variant === 'tweak' ? 18 : 16}
-                    active={false}
-                    variant={variant}
-                  />
-                  <span className={`text-[8px] font-extrabold font-mono ${variant === 'tweak' ? 'text-indigo-300' : 'text-indigo-400'}`}>
-                    {variant === 'tweak'
-                      ? `${customer.satisfiedCount}/${customer.orderedCount}`
-                      : `${Math.max(0, remainingCount)}x`}
-                  </span>
-                </>
-              )}
+            <span className={`text-[6px] font-mono font-black uppercase tracking-widest leading-none mb-0.5 ${
+              variant === 'tweak' ? 'text-indigo-400/80' : variant === 'zen' ? 'text-[#8a5a36]/80' : 'text-stone-400'
+            }`}>
+              Wants
+            </span>
+
+            <div className="relative flex items-center justify-center my-0.5">
+              <SushiPlate
+                variety={customer.orderedVariety}
+                count={1}
+                size={orderPlateSize}
+                active={false}
+                variant={orderPlateVariant}
+              />
             </div>
-            <span className={`text-[7px] font-mono tracking-tight leading-none uppercase truncate w-full text-center mt-0.5 ${textColour}`}>
-              {variant === 'tweak' ? customer.characterName : (variant === 'zen' ? customer.characterName : desiredSushi.displayName)}
+
+            <div className={`mt-0.5 px-2 py-0.5 rounded-full font-black font-mono leading-none ${
+              variant === 'tweak'
+                ? 'bg-indigo-950/80 text-indigo-200 text-xs'
+                : variant === 'zen'
+                  ? 'bg-[#f3e9dc] text-[#5c3a21] text-sm border border-[#ddb892]/60'
+                  : 'bg-stone-900/80 text-amber-300 text-sm'
+            }`}>
+              {variant === 'tweak'
+                ? `${customer.satisfiedCount} / ${customer.orderedCount}`
+                : `× ${remainingLabel}`}
+            </div>
+
+            <span className={`text-[7px] font-mono tracking-tight leading-none uppercase truncate w-full text-center mt-1 ${textColour}`}>
+              {variant === 'tweak' || variant === 'zen' ? customer.characterName : desiredSushi.displayName}
             </span>
           </motion.div>
         )}
