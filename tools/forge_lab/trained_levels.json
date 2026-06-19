@@ -1,0 +1,1725 @@
+{
+  "generatedAt": "2026-06-19T15:06:37",
+  "brainIntelligence": 34,
+  "levels": [
+    {
+      "difficulty": 3,
+      "params": {
+        "difficulty": 3,
+        "numVarieties": 5,
+        "numSeats": 4,
+        "numCustomers": 5,
+        "numQueues": 3,
+        "targetMCR": 0.7
+      },
+      "customers": [
+        [
+          "A",
+          5
+        ],
+        [
+          "B",
+          5
+        ],
+        [
+          "C",
+          5
+        ],
+        [
+          "D",
+          5
+        ],
+        [
+          "E",
+          5
+        ]
+      ],
+      "queues": [
+        [
+          "E",
+          "B",
+          "B",
+          "D",
+          "D",
+          "D",
+          "E",
+          "E",
+          "E",
+          "A",
+          "A"
+        ],
+        [
+          "B",
+          "C",
+          "C",
+          "A",
+          "A",
+          "A",
+          "B",
+          "B"
+        ],
+        [
+          "D",
+          "D",
+          "C",
+          "C",
+          "C",
+          "E"
+        ]
+      ],
+      "solvable": true,
+      "approxSolve": false,
+      "mcr": 1.0,
+      "totalMoves": 30,
+      "criticalMoves": 0,
+      "bufferPeak": 2,
+      "completionTicks": 46,
+      "movePlan": [
+        {
+          "index": 1,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 2,
+          "lane": 1,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 3,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 0,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 4,
+          "lane": 0,
+          "source": "queue",
+          "dish": "B",
+          "tick": 1,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 5,
+          "lane": 0,
+          "source": "queue",
+          "dish": "B",
+          "tick": 2,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 6,
+          "lane": 0,
+          "source": "queue",
+          "dish": "D",
+          "tick": 3,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 7,
+          "lane": 0,
+          "source": "queue",
+          "dish": "D",
+          "tick": 4,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 8,
+          "lane": 0,
+          "source": "queue",
+          "dish": "D",
+          "tick": 5,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 9,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 6,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 10,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 7,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 11,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 8,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 12,
+          "lane": 0,
+          "source": "queue",
+          "dish": "A",
+          "tick": 9,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 13,
+          "lane": 0,
+          "source": "queue",
+          "dish": "A",
+          "tick": 10,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 14,
+          "lane": 1,
+          "source": "queue",
+          "dish": "C",
+          "tick": 12,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 15,
+          "lane": 1,
+          "source": "queue",
+          "dish": "C",
+          "tick": 13,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 16,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 14,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 17,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 15,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 18,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 16,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 19,
+          "lane": 1,
+          "source": "queue",
+          "dish": "B",
+          "tick": 17,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 20,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 17,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 21,
+          "lane": 1,
+          "source": "queue",
+          "dish": "B",
+          "tick": 18,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 22,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 18,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 23,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 20,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 24,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 21,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 25,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 22,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 26,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 23,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 27,
+          "lane": 2,
+          "source": "queue",
+          "dish": "E",
+          "tick": 24,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 28,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 24,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 29,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 25,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 30,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 36,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        }
+      ],
+      "winRates": {
+        "random": 1.0,
+        "greedy": 1.0,
+        "lookahead2": 1.0
+      },
+      "simRuns": 258
+    },
+    {
+      "difficulty": 6,
+      "params": {
+        "difficulty": 6,
+        "numVarieties": 6,
+        "numSeats": 4,
+        "numCustomers": 7,
+        "numQueues": 4,
+        "targetMCR": 0.42
+      },
+      "customers": [
+        [
+          "A",
+          7
+        ],
+        [
+          "B",
+          5
+        ],
+        [
+          "C",
+          6
+        ],
+        [
+          "D",
+          5
+        ],
+        [
+          "E",
+          7
+        ],
+        [
+          "F",
+          7
+        ],
+        [
+          "A",
+          5
+        ]
+      ],
+      "queues": [
+        [
+          "B",
+          "E",
+          "E",
+          "E",
+          "E",
+          "D",
+          "D",
+          "A",
+          "A",
+          "A",
+          "E",
+          "F",
+          "F"
+        ],
+        [
+          "B",
+          "B",
+          "F",
+          "A",
+          "A",
+          "A",
+          "A",
+          "A",
+          "B",
+          "B"
+        ],
+        [
+          "F",
+          "F",
+          "D",
+          "A",
+          "A",
+          "F",
+          "F",
+          "A",
+          "A"
+        ],
+        [
+          "D",
+          "C",
+          "C",
+          "C",
+          "C",
+          "C",
+          "C",
+          "E",
+          "E",
+          "D"
+        ]
+      ],
+      "solvable": true,
+      "approxSolve": false,
+      "mcr": 0.8493150684931506,
+      "totalMoves": 64,
+      "criticalMoves": 4,
+      "bufferPeak": 5,
+      "completionTicks": 61,
+      "movePlan": [
+        {
+          "index": 1,
+          "lane": 0,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 2,
+          "lane": 1,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 3,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 0,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 4,
+          "lane": 3,
+          "source": "queue",
+          "dish": "D",
+          "tick": 0,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 5,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 1,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 6,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 2,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 7,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 3,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 8,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 4,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 9,
+          "lane": 0,
+          "source": "queue",
+          "dish": "D",
+          "tick": 5,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 10,
+          "lane": 0,
+          "source": "queue",
+          "dish": "D",
+          "tick": 6,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 11,
+          "lane": 0,
+          "source": "queue",
+          "dish": "A",
+          "tick": 7,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 12,
+          "lane": 0,
+          "source": "queue",
+          "dish": "A",
+          "tick": 8,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 13,
+          "lane": 0,
+          "source": "queue",
+          "dish": "A",
+          "tick": 9,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 14,
+          "lane": 0,
+          "source": "queue",
+          "dish": "E",
+          "tick": 11,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 15,
+          "lane": 0,
+          "source": "queue",
+          "dish": "F",
+          "tick": 12,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 16,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 12,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 17,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 12,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 18,
+          "lane": 0,
+          "source": "queue",
+          "dish": "F",
+          "tick": 13,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 19,
+          "lane": 1,
+          "source": "queue",
+          "dish": "B",
+          "tick": 15,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 20,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 17,
+          "available_choices": 2,
+          "valid_choices": 1,
+          "error_chance": 0.5,
+          "critical": true
+        },
+        {
+          "index": 21,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 19,
+          "available_choices": 2,
+          "valid_choices": 1,
+          "error_chance": 0.5,
+          "critical": true
+        },
+        {
+          "index": 22,
+          "lane": 1,
+          "source": "queue",
+          "dish": "F",
+          "tick": 20,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 23,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 20,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 24,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 21,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 25,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 21,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 26,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 22,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 27,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 22,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 28,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 23,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 29,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 24,
+          "available_choices": 4,
+          "valid_choices": 4,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 30,
+          "lane": 2,
+          "source": "queue",
+          "dish": "A",
+          "tick": 24,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 31,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 24,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 32,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 25,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 33,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 28,
+          "available_choices": 2,
+          "valid_choices": 1,
+          "error_chance": 0.5,
+          "critical": true
+        },
+        {
+          "index": 34,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 29,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 35,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 31,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 36,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 32,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 37,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 32,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 38,
+          "lane": 1,
+          "source": "queue",
+          "dish": "B",
+          "tick": 33,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 39,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 33,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 40,
+          "lane": 1,
+          "source": "queue",
+          "dish": "B",
+          "tick": 34,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 41,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 34,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 42,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 35,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 43,
+          "lane": 2,
+          "source": "queue",
+          "dish": "A",
+          "tick": 36,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 44,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 36,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 45,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 38,
+          "available_choices": 2,
+          "valid_choices": 1,
+          "error_chance": 0.5,
+          "critical": true
+        },
+        {
+          "index": 46,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 39,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 47,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 41,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 48,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 42,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 49,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 43,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 50,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 44,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 51,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 45,
+          "available_choices": 4,
+          "valid_choices": 4,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 52,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "A",
+          "tick": 45,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 53,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 46,
+          "available_choices": 4,
+          "valid_choices": 4,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 54,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 46,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 55,
+          "lane": 2,
+          "source": "queue",
+          "dish": "A",
+          "tick": 47,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 56,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "A",
+          "tick": 47,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 57,
+          "lane": 2,
+          "source": "queue",
+          "dish": "A",
+          "tick": 48,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 58,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 48,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 59,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 49,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 60,
+          "lane": 3,
+          "source": "queue",
+          "dish": "E",
+          "tick": 50,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 61,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 50,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 62,
+          "lane": 3,
+          "source": "queue",
+          "dish": "E",
+          "tick": 51,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 63,
+          "lane": 3,
+          "source": "queue",
+          "dish": "D",
+          "tick": 52,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 64,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "A",
+          "tick": 55,
+          "available_choices": 1,
+          "valid_choices": 1,
+          "error_chance": 0.0,
+          "critical": false
+        }
+      ],
+      "winRates": {
+        "random": 0.0,
+        "greedy": 1.0,
+        "lookahead2": 1.0
+      },
+      "simRuns": 260
+    },
+    {
+      "difficulty": 9,
+      "params": {
+        "difficulty": 9,
+        "numVarieties": 8,
+        "numSeats": 5,
+        "numCustomers": 8,
+        "numQueues": 5,
+        "targetMCR": 0.26
+      },
+      "customers": [
+        [
+          "A",
+          6
+        ],
+        [
+          "B",
+          7
+        ],
+        [
+          "C",
+          6
+        ],
+        [
+          "D",
+          8
+        ],
+        [
+          "E",
+          7
+        ],
+        [
+          "F",
+          6
+        ],
+        [
+          "G",
+          7
+        ],
+        [
+          "H",
+          6
+        ]
+      ],
+      "queues": [
+        [
+          "B",
+          "B",
+          "F",
+          "A",
+          "F",
+          "F",
+          "F",
+          "G",
+          "G",
+          "G",
+          "G",
+          "G"
+        ],
+        [
+          "G",
+          "G",
+          "F",
+          "F",
+          "H",
+          "H",
+          "C",
+          "A"
+        ],
+        [
+          "E",
+          "E",
+          "E",
+          "E",
+          "D",
+          "D",
+          "D",
+          "D",
+          "C",
+          "C",
+          "C",
+          "B",
+          "D",
+          "D",
+          "D"
+        ],
+        [
+          "B",
+          "B",
+          "B",
+          "A",
+          "D",
+          "H",
+          "H",
+          "H",
+          "H"
+        ],
+        [
+          "B",
+          "C",
+          "C",
+          "A",
+          "A",
+          "E",
+          "E",
+          "E",
+          "A"
+        ]
+      ],
+      "solvable": true,
+      "approxSolve": true,
+      "mcr": 0.22,
+      "totalMoves": 53,
+      "criticalMoves": 0,
+      "bufferPeak": null,
+      "completionTicks": null,
+      "movePlan": [
+        {
+          "index": 1,
+          "lane": 0,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0
+        },
+        {
+          "index": 2,
+          "lane": 2,
+          "source": "queue",
+          "dish": "E",
+          "tick": 0
+        },
+        {
+          "index": 3,
+          "lane": 3,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0
+        },
+        {
+          "index": 4,
+          "lane": 4,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0
+        },
+        {
+          "index": 5,
+          "lane": 0,
+          "source": "queue",
+          "dish": "B",
+          "tick": 1
+        },
+        {
+          "index": 6,
+          "lane": 2,
+          "source": "queue",
+          "dish": "E",
+          "tick": 1
+        },
+        {
+          "index": 7,
+          "lane": 4,
+          "source": "queue",
+          "dish": "C",
+          "tick": 2
+        },
+        {
+          "index": 8,
+          "lane": 4,
+          "source": "queue",
+          "dish": "C",
+          "tick": 3
+        },
+        {
+          "index": 9,
+          "lane": 2,
+          "source": "queue",
+          "dish": "E",
+          "tick": 4
+        },
+        {
+          "index": 10,
+          "lane": 2,
+          "source": "queue",
+          "dish": "E",
+          "tick": 5
+        },
+        {
+          "index": 11,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 6
+        },
+        {
+          "index": 12,
+          "lane": 4,
+          "source": "queue",
+          "dish": "A",
+          "tick": 6
+        },
+        {
+          "index": 13,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 7
+        },
+        {
+          "index": 14,
+          "lane": 4,
+          "source": "queue",
+          "dish": "A",
+          "tick": 7
+        },
+        {
+          "index": 15,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 8
+        },
+        {
+          "index": 16,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 9
+        },
+        {
+          "index": 17,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 10
+        },
+        {
+          "index": 18,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 11
+        },
+        {
+          "index": 19,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 12
+        },
+        {
+          "index": 20,
+          "lane": 2,
+          "source": "queue",
+          "dish": "B",
+          "tick": 13
+        },
+        {
+          "index": 21,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 14
+        },
+        {
+          "index": 22,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 15
+        },
+        {
+          "index": 23,
+          "lane": 2,
+          "source": "queue",
+          "dish": "D",
+          "tick": 16
+        },
+        {
+          "index": 24,
+          "lane": 3,
+          "source": "queue",
+          "dish": "B",
+          "tick": 18
+        },
+        {
+          "index": 25,
+          "lane": 3,
+          "source": "queue",
+          "dish": "B",
+          "tick": 19
+        },
+        {
+          "index": 26,
+          "lane": 3,
+          "source": "queue",
+          "dish": "A",
+          "tick": 20
+        },
+        {
+          "index": 27,
+          "lane": 3,
+          "source": "queue",
+          "dish": "D",
+          "tick": 21
+        },
+        {
+          "index": 28,
+          "lane": 4,
+          "source": "queue",
+          "dish": "E",
+          "tick": 23
+        },
+        {
+          "index": 29,
+          "lane": 4,
+          "source": "queue",
+          "dish": "E",
+          "tick": 23
+        },
+        {
+          "index": 30,
+          "lane": 4,
+          "source": "queue",
+          "dish": "E",
+          "tick": 23
+        },
+        {
+          "index": 31,
+          "lane": 4,
+          "source": "queue",
+          "dish": "A",
+          "tick": 23
+        },
+        {
+          "index": 32,
+          "lane": 0,
+          "source": "queue",
+          "dish": "F",
+          "tick": 27
+        },
+        {
+          "index": 33,
+          "lane": 0,
+          "source": "queue",
+          "dish": "A",
+          "tick": 28
+        },
+        {
+          "index": 34,
+          "lane": 0,
+          "source": "queue",
+          "dish": "F",
+          "tick": 29
+        },
+        {
+          "index": 35,
+          "lane": 0,
+          "source": "queue",
+          "dish": "F",
+          "tick": 30
+        },
+        {
+          "index": 36,
+          "lane": 0,
+          "source": "queue",
+          "dish": "F",
+          "tick": 31
+        },
+        {
+          "index": 37,
+          "lane": 0,
+          "source": "queue",
+          "dish": "G",
+          "tick": 32
+        },
+        {
+          "index": 38,
+          "lane": 0,
+          "source": "queue",
+          "dish": "G",
+          "tick": 33
+        },
+        {
+          "index": 39,
+          "lane": 0,
+          "source": "queue",
+          "dish": "G",
+          "tick": 34
+        },
+        {
+          "index": 40,
+          "lane": 0,
+          "source": "queue",
+          "dish": "G",
+          "tick": 35
+        },
+        {
+          "index": 41,
+          "lane": 0,
+          "source": "queue",
+          "dish": "G",
+          "tick": 36
+        },
+        {
+          "index": 42,
+          "lane": 1,
+          "source": "queue",
+          "dish": "G",
+          "tick": 38
+        },
+        {
+          "index": 43,
+          "lane": 1,
+          "source": "queue",
+          "dish": "G",
+          "tick": 39
+        },
+        {
+          "index": 44,
+          "lane": 1,
+          "source": "queue",
+          "dish": "F",
+          "tick": 40
+        },
+        {
+          "index": 45,
+          "lane": 1,
+          "source": "queue",
+          "dish": "F",
+          "tick": 41
+        },
+        {
+          "index": 46,
+          "lane": 1,
+          "source": "queue",
+          "dish": "H",
+          "tick": 42
+        },
+        {
+          "index": 47,
+          "lane": 1,
+          "source": "queue",
+          "dish": "H",
+          "tick": 43
+        },
+        {
+          "index": 48,
+          "lane": 1,
+          "source": "queue",
+          "dish": "C",
+          "tick": 44
+        },
+        {
+          "index": 49,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 45
+        },
+        {
+          "index": 50,
+          "lane": 3,
+          "source": "queue",
+          "dish": "H",
+          "tick": 48
+        },
+        {
+          "index": 51,
+          "lane": 3,
+          "source": "queue",
+          "dish": "H",
+          "tick": 49
+        },
+        {
+          "index": 52,
+          "lane": 3,
+          "source": "queue",
+          "dish": "H",
+          "tick": 50
+        },
+        {
+          "index": 53,
+          "lane": 3,
+          "source": "queue",
+          "dish": "H",
+          "tick": 51
+        }
+      ],
+      "winRates": {
+        "random": 0.0,
+        "greedy": 1.0,
+        "lookahead2": 1.0
+      },
+      "simRuns": 271
+    }
+  ]
+}

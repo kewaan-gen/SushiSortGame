@@ -9,7 +9,7 @@ import { Play, Sparkles, HelpCircle, Volume2, VolumeX } from 'lucide-react';
 import { sfx } from '../utils/audio';
 
 interface MainMenuProps {
-  onSelectMode: (mode: 'zen' | 'tweak') => void;
+  onSelectMode: (mode: 'zen' | 'tweak' | 'forge') => void;
   isMuted: boolean;
   onToggleMute: () => void;
   onShowTutorial: () => void;
@@ -23,7 +23,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onShowTutorial,
   highScore,
 }) => {
-  const selectMode = (mode: 'zen' | 'tweak') => {
+  const selectMode = (mode: 'zen' | 'tweak' | 'forge') => {
     sfx.playCoinDing();
     onSelectMode(mode);
   };
@@ -115,7 +115,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           )}
         </div>
 
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mt-2">
+        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mt-2">
           
           <motion.div
             whileHover={{ y: -6, scale: 1.02 }}
@@ -190,6 +190,43 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               >
                 Open Developer Mode
               </button>
+            </div>
+          </motion.div>
+
+          {/* Level Forge card */}
+          <motion.div
+            whileHover={{ y: -6, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => selectMode('forge')}
+            className="flex flex-col justify-between bg-[#160f24] border-[4px] border-violet-700 rounded-3xl p-6 shadow-lg cursor-pointer transition-colors relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/15 rounded-full blur-xl group-hover:bg-violet-500/30 transition-all duration-300" />
+
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <span className="text-3xl drop-shadow">⚒️</span>
+                <span className="text-[10px] font-mono font-bold bg-violet-950/60 text-violet-300 border border-violet-500/40 px-2 py-0.5 rounded-md">
+                  GENERATOR
+                </span>
+              </div>
+
+              <h3 className="text-xl font-serif italic font-extrabold text-violet-300 mb-2 transition-colors group-hover:text-violet-200">
+                Level Forge
+              </h3>
+              <p className="text-xs font-mono text-stone-400 leading-relaxed mb-6">
+                An intelligent, solver-backed level generator. Pick a difficulty 1-10 and the forge
+                computes the queues, the exact optimal move plan, and a calibrated rating. Build,
+                edit, play, and export.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-violet-900/60">
+              <span className="text-[10px] font-mono text-violet-500 uppercase tracking-widest">
+                Difficulty 1-10 · Solver AI
+              </span>
+              <span className="text-xs font-bold font-mono text-white bg-violet-600 hover:bg-violet-700 flex items-center gap-1.5 px-3 py-1 rounded-lg shadow-sm transition">
+                Open <Play className="w-3 h-3 fill-current" />
+              </span>
             </div>
           </motion.div>
 

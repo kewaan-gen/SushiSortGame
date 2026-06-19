@@ -1,0 +1,155 @@
+{
+  "generatedAt": "2026-06-19T12:16:39",
+  "difficulties": [
+    {
+      "difficulty": 1,
+      "targetMCR": 1.0,
+      "actualMCR": 1.0,
+      "solvableRate": 1.0,
+      "avgMoves": 12.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 1.0,
+        "greedy": 1.0,
+        "lookahead1": 1.0,
+        "lookahead2": 1.0
+      }
+    },
+    {
+      "difficulty": 2,
+      "targetMCR": 0.85,
+      "actualMCR": 0.8478260869565217,
+      "solvableRate": 1.0,
+      "avgMoves": 20.0,
+      "avgCritical": 1.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.13333333333333333,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    },
+    {
+      "difficulty": 3,
+      "targetMCR": 0.7,
+      "actualMCR": 1.0,
+      "solvableRate": 1.0,
+      "avgMoves": 25.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.7333333333333334,
+        "greedy": 1.0,
+        "lookahead1": 1.0,
+        "lookahead2": 1.0
+      }
+    },
+    {
+      "difficulty": 4,
+      "targetMCR": 0.6,
+      "actualMCR": NaN,
+      "solvableRate": 0.0,
+      "avgMoves": 0.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.0,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    },
+    {
+      "difficulty": 5,
+      "targetMCR": 0.5,
+      "actualMCR": NaN,
+      "solvableRate": 0.0,
+      "avgMoves": 0.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.0,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    },
+    {
+      "difficulty": 6,
+      "targetMCR": 0.42,
+      "actualMCR": NaN,
+      "solvableRate": 0.0,
+      "avgMoves": 0.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.0,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    },
+    {
+      "difficulty": 7,
+      "targetMCR": 0.36,
+      "actualMCR": NaN,
+      "solvableRate": 0.0,
+      "avgMoves": 0.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.0,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    },
+    {
+      "difficulty": 8,
+      "targetMCR": 0.3,
+      "actualMCR": NaN,
+      "solvableRate": 0.0,
+      "avgMoves": 0.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.0,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    },
+    {
+      "difficulty": 9,
+      "targetMCR": 0.26,
+      "actualMCR": NaN,
+      "solvableRate": 0.0,
+      "avgMoves": 0.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.0,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    },
+    {
+      "difficulty": 10,
+      "targetMCR": 0.22,
+      "actualMCR": NaN,
+      "solvableRate": 0.0,
+      "avgMoves": 0.0,
+      "avgCritical": 0.0,
+      "avgBufferPeak": 0.0,
+      "policyWinRates": {
+        "random": 0.0,
+        "greedy": 0.0,
+        "lookahead1": 0.0,
+        "lookahead2": 0.0
+      }
+    }
+  ]
+}

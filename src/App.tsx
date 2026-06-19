@@ -13,6 +13,7 @@ import { QueueDispenser } from './components/QueueDispenser';
 import { PlateTransferOverlay, PlateTransferFlight } from './components/PlateTransferOverlay';
 import { SushiPlate } from './components/SushiPlate';
 import { MainMenu } from './components/MainMenu';
+import { LevelForge } from './components/LevelForge/LevelForge';
 import { sfx } from './utils/audio';
 import {
   getElementCenterInPlayfield,
@@ -340,7 +341,7 @@ export default function App() {
   const inflightBeltSlotsRef = useRef<Set<number>>(new Set());
   const [activeTransfers, setActiveTransfers] = useState<PlateTransferFlight[]>([]);
   
-  const [gameMode, setGameMode] = useState<'menu' | 'zen' | 'tweak'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'zen' | 'tweak' | 'forge'>('menu');
   const [isSimPaused, setIsSimPaused] = useState(false);
   const [dockCrashThreshold, setDockCrashThreshold] = useState(5);
   const [total360Rotations, setTotal360Rotations] = useState(0);
@@ -1412,6 +1413,10 @@ export default function App() {
     return (
       <MainMenu
         onSelectMode={(mode) => {
+          if (mode === 'forge') {
+            setGameMode('forge');
+            return;
+          }
           setGameMode(mode);
           if (mode === 'zen') {
             setZenBaseBeltSpeed(850);
@@ -1430,6 +1435,10 @@ export default function App() {
         highScore={highScore}
       />
     );
+  }
+
+  if (gameMode === 'forge') {
+    return <LevelForge onExit={() => setGameMode('menu')} />;
   }
 
   const remainingDemandTotal = getTotalRemainingDemand(
