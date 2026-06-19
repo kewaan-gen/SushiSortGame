@@ -1,85 +1,80 @@
 {
-  "generatedAt": "2026-06-19T15:06:37",
-  "brainIntelligence": 34,
+  "generatedAt": "2026-06-19T15:51:59",
+  "brainIntelligence": 29,
   "levels": [
     {
-      "difficulty": 3,
+      "difficulty": 2,
       "params": {
-        "difficulty": 3,
-        "numVarieties": 5,
+        "difficulty": 2,
+        "numVarieties": 4,
         "numSeats": 4,
         "numCustomers": 5,
         "numQueues": 3,
-        "targetMCR": 0.7
+        "targetMCR": 0.85
       },
       "customers": [
         [
           "A",
-          5
+          4
         ],
         [
           "B",
-          5
+          4
         ],
         [
           "C",
-          5
+          4
         ],
         [
           "D",
-          5
+          4
         ],
         [
-          "E",
-          5
+          "A",
+          4
         ]
       ],
       "queues": [
         [
-          "E",
-          "B",
-          "B",
-          "D",
-          "D",
-          "D",
-          "E",
-          "E",
-          "E",
+          "A",
+          "A",
+          "C",
+          "C",
+          "A",
+          "A",
+          "A",
+          "A",
           "A",
           "A"
         ],
         [
           "B",
-          "C",
-          "C",
-          "A",
-          "A",
-          "A",
-          "B",
+          "D",
+          "D",
+          "D",
           "B"
         ],
         [
           "D",
-          "D",
           "C",
           "C",
-          "C",
-          "E"
+          "B",
+          "B"
         ]
       ],
       "solvable": true,
       "approxSolve": false,
       "mcr": 1.0,
-      "totalMoves": 30,
+      "totalMoves": 22,
       "criticalMoves": 0,
       "bufferPeak": 2,
-      "completionTicks": 46,
+      "completionTicks": 16,
       "movePlan": [
         {
           "index": 1,
           "lane": 0,
           "source": "queue",
-          "dish": "E",
+          "dish": "A",
           "tick": 0,
           "available_choices": 3,
           "valid_choices": 3,
@@ -88,23 +83,23 @@
         },
         {
           "index": 2,
-          "lane": 1,
+          "lane": 0,
           "source": "queue",
-          "dish": "B",
+          "dish": "A",
           "tick": 0,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 3,
-          "lane": 2,
+          "lane": 0,
           "source": "queue",
-          "dish": "D",
+          "dish": "C",
           "tick": 0,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -112,10 +107,10 @@
           "index": 4,
           "lane": 0,
           "source": "queue",
-          "dish": "B",
-          "tick": 1,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "C",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -123,10 +118,10 @@
           "index": 5,
           "lane": 0,
           "source": "queue",
-          "dish": "B",
-          "tick": 2,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "A",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -134,10 +129,10 @@
           "index": 6,
           "lane": 0,
           "source": "queue",
-          "dish": "D",
-          "tick": 3,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "A",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -145,10 +140,10 @@
           "index": 7,
           "lane": 0,
           "source": "queue",
-          "dish": "D",
-          "tick": 4,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "A",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -156,10 +151,10 @@
           "index": 8,
           "lane": 0,
           "source": "queue",
-          "dish": "D",
-          "tick": 5,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "A",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -167,10 +162,10 @@
           "index": 9,
           "lane": 0,
           "source": "queue",
-          "dish": "E",
-          "tick": 6,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "A",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -178,43 +173,43 @@
           "index": 10,
           "lane": 0,
           "source": "queue",
-          "dish": "E",
-          "tick": 7,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "A",
+          "tick": 0,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 11,
-          "lane": 0,
+          "lane": 1,
           "source": "queue",
-          "dish": "E",
-          "tick": 8,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 2,
+          "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 12,
-          "lane": 0,
+          "lane": 1,
           "source": "queue",
-          "dish": "A",
-          "tick": 9,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "D",
+          "tick": 0,
+          "available_choices": 2,
+          "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 13,
-          "lane": 0,
+          "lane": 1,
           "source": "queue",
-          "dish": "A",
-          "tick": 10,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "D",
+          "tick": 1,
+          "available_choices": 2,
+          "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
@@ -222,10 +217,10 @@
           "index": 14,
           "lane": 1,
           "source": "queue",
-          "dish": "C",
-          "tick": 12,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "D",
+          "tick": 1,
+          "available_choices": 2,
+          "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
@@ -233,19 +228,19 @@
           "index": 15,
           "lane": 1,
           "source": "queue",
-          "dish": "C",
-          "tick": 13,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "B",
+          "tick": 2,
+          "available_choices": 2,
+          "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 16,
-          "lane": 1,
+          "lane": 2,
           "source": "queue",
-          "dish": "A",
-          "tick": 14,
+          "dish": "D",
+          "tick": 2,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -253,10 +248,10 @@
         },
         {
           "index": 17,
-          "lane": 1,
+          "lane": 2,
           "source": "queue",
-          "dish": "A",
-          "tick": 15,
+          "dish": "C",
+          "tick": 3,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -264,10 +259,10 @@
         },
         {
           "index": 18,
-          "lane": 1,
+          "lane": 2,
           "source": "queue",
-          "dish": "A",
-          "tick": 16,
+          "dish": "C",
+          "tick": 3,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -275,21 +270,21 @@
         },
         {
           "index": 19,
-          "lane": 1,
+          "lane": 2,
           "source": "queue",
           "dish": "B",
-          "tick": 17,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "tick": 3,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 20,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 17,
+          "lane": 2,
+          "source": "queue",
+          "dish": "B",
+          "tick": 3,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -297,12 +292,12 @@
         },
         {
           "index": 21,
-          "lane": 1,
-          "source": "queue",
-          "dish": "B",
-          "tick": 18,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "A",
+          "tick": 12,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
@@ -310,96 +305,8 @@
           "index": 22,
           "lane": -1,
           "source": "buffer",
-          "dish": "E",
-          "tick": 18,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 23,
-          "lane": 2,
-          "source": "queue",
-          "dish": "D",
-          "tick": 20,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 24,
-          "lane": 2,
-          "source": "queue",
-          "dish": "C",
-          "tick": 21,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 25,
-          "lane": 2,
-          "source": "queue",
-          "dish": "C",
-          "tick": 22,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 26,
-          "lane": 2,
-          "source": "queue",
-          "dish": "C",
-          "tick": 23,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 27,
-          "lane": 2,
-          "source": "queue",
-          "dish": "E",
-          "tick": 24,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 28,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 24,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 29,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 25,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 30,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 36,
+          "dish": "A",
+          "tick": 12,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -411,30 +318,30 @@
         "greedy": 1.0,
         "lookahead2": 1.0
       },
-      "simRuns": 258
+      "simRuns": 208
     },
     {
-      "difficulty": 6,
+      "difficulty": 5,
       "params": {
-        "difficulty": 6,
+        "difficulty": 5,
         "numVarieties": 6,
         "numSeats": 4,
-        "numCustomers": 7,
+        "numCustomers": 6,
         "numQueues": 4,
-        "targetMCR": 0.42
+        "targetMCR": 0.5
       },
       "customers": [
         [
           "A",
-          7
+          6
         ],
         [
           "B",
-          5
+          6
         ],
         [
           "C",
-          6
+          5
         ],
         [
           "D",
@@ -442,82 +349,70 @@
         ],
         [
           "E",
-          7
+          6
         ],
         [
           "F",
-          7
-        ],
-        [
-          "A",
-          5
+          6
         ]
       ],
       "queues": [
         [
+          "E",
+          "E",
+          "E",
+          "D",
+          "D",
+          "D",
+          "D",
+          "B",
+          "B",
+          "B",
+          "B",
           "B",
           "E",
-          "E",
-          "E",
-          "E",
-          "D",
-          "D",
-          "A",
-          "A",
-          "A",
-          "E",
-          "F",
-          "F"
+          "E"
         ],
         [
-          "B",
-          "B",
-          "F",
           "A",
           "A",
           "A",
-          "A",
-          "A",
-          "B",
-          "B"
-        ],
-        [
-          "F",
-          "F",
-          "D",
-          "A",
-          "A",
-          "F",
+          "E",
           "F",
           "A",
           "A"
         ],
         [
-          "D",
+          "B",
           "C",
           "C",
           "C",
+          "F",
+          "F",
+          "F"
+        ],
+        [
           "C",
           "C",
-          "C",
-          "E",
-          "E",
+          "F",
+          "F",
+          "A",
           "D"
         ]
       ],
       "solvable": true,
       "approxSolve": false,
-      "mcr": 0.8493150684931506,
-      "totalMoves": 64,
-      "criticalMoves": 4,
+      "mcr": 0.9893617021276596,
+      "totalMoves": 47,
+      "criticalMoves": 1,
       "bufferPeak": 5,
-      "completionTicks": 61,
+      "completionTicks": 33,
       "movePlan": [
         {
           "index": 1,
           "lane": 0,
           "source": "queue",
-          "dish": "B",
+          "dish": "E",
           "tick": 0,
           "available_choices": 4,
           "valid_choices": 4,
@@ -526,34 +421,34 @@
         },
         {
           "index": 2,
-          "lane": 1,
+          "lane": 0,
           "source": "queue",
-          "dish": "B",
+          "dish": "E",
           "tick": 0,
-          "available_choices": 3,
-          "valid_choices": 3,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 3,
-          "lane": 2,
+          "lane": 0,
           "source": "queue",
-          "dish": "F",
+          "dish": "E",
           "tick": 0,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 4,
-          "lane": 3,
+          "lane": 0,
           "source": "queue",
           "dish": "D",
           "tick": 0,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -561,10 +456,10 @@
           "index": 5,
           "lane": 0,
           "source": "queue",
-          "dish": "E",
-          "tick": 1,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "D",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -572,10 +467,10 @@
           "index": 6,
           "lane": 0,
           "source": "queue",
-          "dish": "E",
-          "tick": 2,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "D",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -583,10 +478,10 @@
           "index": 7,
           "lane": 0,
           "source": "queue",
-          "dish": "E",
-          "tick": 3,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "D",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -594,10 +489,10 @@
           "index": 8,
           "lane": 0,
           "source": "queue",
-          "dish": "E",
-          "tick": 4,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -605,10 +500,10 @@
           "index": 9,
           "lane": 0,
           "source": "queue",
-          "dish": "D",
-          "tick": 5,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -616,10 +511,10 @@
           "index": 10,
           "lane": 0,
           "source": "queue",
-          "dish": "D",
-          "tick": 6,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -627,10 +522,10 @@
           "index": 11,
           "lane": 0,
           "source": "queue",
-          "dish": "A",
-          "tick": 7,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -638,10 +533,10 @@
           "index": 12,
           "lane": 0,
           "source": "queue",
-          "dish": "A",
-          "tick": 8,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "B",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -649,10 +544,10 @@
           "index": 13,
           "lane": 0,
           "source": "queue",
-          "dish": "A",
-          "tick": 9,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "E",
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
@@ -661,18 +556,18 @@
           "lane": 0,
           "source": "queue",
           "dish": "E",
-          "tick": 11,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "tick": 0,
+          "available_choices": 4,
+          "valid_choices": 4,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 15,
-          "lane": 0,
+          "lane": 1,
           "source": "queue",
-          "dish": "F",
-          "tick": 12,
+          "dish": "A",
+          "tick": 0,
           "available_choices": 3,
           "valid_choices": 3,
           "error_chance": 0.0,
@@ -680,34 +575,34 @@
         },
         {
           "index": 16,
-          "lane": 2,
+          "lane": 1,
           "source": "queue",
-          "dish": "F",
-          "tick": 12,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "dish": "A",
+          "tick": 1,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 17,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "F",
-          "tick": 12,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 3,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 18,
-          "lane": 0,
+          "lane": 1,
           "source": "queue",
-          "dish": "F",
-          "tick": 13,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "E",
+          "tick": 4,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
@@ -715,41 +610,41 @@
           "index": 19,
           "lane": 1,
           "source": "queue",
-          "dish": "B",
-          "tick": 15,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "F",
+          "tick": 5,
+          "available_choices": 3,
+          "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 20,
-          "lane": 2,
+          "lane": 1,
           "source": "queue",
-          "dish": "D",
-          "tick": 17,
-          "available_choices": 2,
-          "valid_choices": 1,
-          "error_chance": 0.5,
-          "critical": true
+          "dish": "A",
+          "tick": 6,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
         },
         {
           "index": 21,
-          "lane": 3,
+          "lane": 1,
           "source": "queue",
-          "dish": "C",
-          "tick": 19,
-          "available_choices": 2,
-          "valid_choices": 1,
-          "error_chance": 0.5,
-          "critical": true
+          "dish": "A",
+          "tick": 7,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
         },
         {
           "index": 22,
-          "lane": 1,
+          "lane": 2,
           "source": "queue",
-          "dish": "F",
-          "tick": 20,
+          "dish": "B",
+          "tick": 7,
           "available_choices": 2,
           "valid_choices": 2,
           "error_chance": 0.0,
@@ -757,21 +652,21 @@
         },
         {
           "index": 23,
-          "lane": 3,
+          "lane": 2,
           "source": "queue",
           "dish": "C",
-          "tick": 20,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "tick": 7,
+          "available_choices": 2,
+          "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 24,
-          "lane": 1,
+          "lane": 2,
           "source": "queue",
-          "dish": "A",
-          "tick": 21,
+          "dish": "C",
+          "tick": 8,
           "available_choices": 2,
           "valid_choices": 2,
           "error_chance": 0.0,
@@ -779,76 +674,76 @@
         },
         {
           "index": 25,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 21,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 26,
-          "lane": 1,
+          "lane": 2,
           "source": "queue",
-          "dish": "A",
-          "tick": 22,
+          "dish": "C",
+          "tick": 11,
           "available_choices": 2,
           "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
         {
-          "index": 27,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 22,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 28,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 23,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 29,
-          "lane": 1,
-          "source": "queue",
-          "dish": "A",
-          "tick": 24,
-          "available_choices": 4,
-          "valid_choices": 4,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 30,
+          "index": 26,
           "lane": 2,
           "source": "queue",
-          "dish": "A",
-          "tick": 24,
+          "dish": "F",
+          "tick": 12,
           "available_choices": 3,
           "valid_choices": 3,
           "error_chance": 0.0,
           "critical": false
         },
         {
+          "index": 27,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 12,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 28,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 12,
+          "available_choices": 3,
+          "valid_choices": 3,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 29,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 12,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 30,
+          "lane": 3,
+          "source": "queue",
+          "dish": "C",
+          "tick": 12,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
           "index": 31,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 24,
+          "lane": 3,
+          "source": "queue",
+          "dish": "F",
+          "tick": 13,
           "available_choices": 2,
           "valid_choices": 2,
           "error_chance": 0.0,
@@ -856,12 +751,12 @@
         },
         {
           "index": 32,
-          "lane": 1,
+          "lane": 3,
           "source": "queue",
-          "dish": "A",
-          "tick": 25,
-          "available_choices": 1,
-          "valid_choices": 1,
+          "dish": "F",
+          "tick": 14,
+          "available_choices": 2,
+          "valid_choices": 2,
           "error_chance": 0.0,
           "critical": false
         },
@@ -869,30 +764,30 @@
           "index": 33,
           "lane": 3,
           "source": "queue",
-          "dish": "C",
-          "tick": 28,
+          "dish": "A",
+          "tick": 14,
+          "available_choices": 2,
+          "valid_choices": 2,
+          "error_chance": 0.0,
+          "critical": false
+        },
+        {
+          "index": 34,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 14,
           "available_choices": 2,
           "valid_choices": 1,
           "error_chance": 0.5,
           "critical": true
         },
         {
-          "index": 34,
+          "index": 35,
           "lane": 3,
           "source": "queue",
-          "dish": "C",
-          "tick": 29,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 35,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 31,
+          "dish": "D",
+          "tick": 15,
           "available_choices": 2,
           "valid_choices": 2,
           "error_chance": 0.0,
@@ -900,12 +795,12 @@
         },
         {
           "index": 36,
-          "lane": 1,
-          "source": "queue",
-          "dish": "A",
-          "tick": 32,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 16,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
@@ -913,8 +808,8 @@
           "index": 37,
           "lane": -1,
           "source": "buffer",
-          "dish": "F",
-          "tick": 32,
+          "dish": "E",
+          "tick": 16,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -922,12 +817,12 @@
         },
         {
           "index": 38,
-          "lane": 1,
-          "source": "queue",
-          "dish": "B",
-          "tick": 33,
-          "available_choices": 3,
-          "valid_choices": 3,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 16,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
@@ -935,21 +830,21 @@
           "index": 39,
           "lane": -1,
           "source": "buffer",
-          "dish": "F",
-          "tick": 33,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "dish": "E",
+          "tick": 16,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 40,
-          "lane": 1,
-          "source": "queue",
-          "dish": "B",
-          "tick": 34,
-          "available_choices": 3,
-          "valid_choices": 3,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "E",
+          "tick": 16,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
@@ -958,9 +853,9 @@
           "lane": -1,
           "source": "buffer",
           "dish": "F",
-          "tick": 34,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "tick": 17,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
@@ -969,20 +864,20 @@
           "lane": -1,
           "source": "buffer",
           "dish": "F",
-          "tick": 35,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "tick": 24,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 43,
-          "lane": 2,
-          "source": "queue",
-          "dish": "A",
-          "tick": 36,
-          "available_choices": 3,
-          "valid_choices": 3,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 24,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
@@ -991,29 +886,29 @@
           "lane": -1,
           "source": "buffer",
           "dish": "F",
-          "tick": 36,
-          "available_choices": 2,
-          "valid_choices": 2,
+          "tick": 24,
+          "available_choices": 1,
+          "valid_choices": 1,
           "error_chance": 0.0,
           "critical": false
         },
         {
           "index": 45,
-          "lane": 3,
-          "source": "queue",
-          "dish": "C",
-          "tick": 38,
-          "available_choices": 2,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 25,
+          "available_choices": 1,
           "valid_choices": 1,
-          "error_chance": 0.5,
-          "critical": true
+          "error_chance": 0.0,
+          "critical": false
         },
         {
           "index": 46,
-          "lane": 3,
-          "source": "queue",
-          "dish": "C",
-          "tick": 39,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "F",
+          "tick": 26,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -1023,195 +918,8 @@
           "index": 47,
           "lane": -1,
           "source": "buffer",
-          "dish": "E",
-          "tick": 41,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 48,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 42,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 49,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 43,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 50,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 44,
-          "available_choices": 3,
-          "valid_choices": 3,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 51,
-          "lane": 2,
-          "source": "queue",
           "dish": "F",
-          "tick": 45,
-          "available_choices": 4,
-          "valid_choices": 4,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 52,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "A",
-          "tick": 45,
-          "available_choices": 3,
-          "valid_choices": 3,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 53,
-          "lane": 2,
-          "source": "queue",
-          "dish": "F",
-          "tick": 46,
-          "available_choices": 4,
-          "valid_choices": 4,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 54,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "E",
-          "tick": 46,
-          "available_choices": 3,
-          "valid_choices": 3,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 55,
-          "lane": 2,
-          "source": "queue",
-          "dish": "A",
-          "tick": 47,
-          "available_choices": 3,
-          "valid_choices": 3,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 56,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "A",
-          "tick": 47,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 57,
-          "lane": 2,
-          "source": "queue",
-          "dish": "A",
-          "tick": 48,
-          "available_choices": 3,
-          "valid_choices": 3,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 58,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "F",
-          "tick": 48,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 59,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "F",
-          "tick": 49,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 60,
-          "lane": 3,
-          "source": "queue",
-          "dish": "E",
-          "tick": 50,
-          "available_choices": 3,
-          "valid_choices": 3,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 61,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "F",
-          "tick": 50,
-          "available_choices": 2,
-          "valid_choices": 2,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 62,
-          "lane": 3,
-          "source": "queue",
-          "dish": "E",
-          "tick": 51,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 63,
-          "lane": 3,
-          "source": "queue",
-          "dish": "D",
-          "tick": 52,
-          "available_choices": 1,
-          "valid_choices": 1,
-          "error_chance": 0.0,
-          "critical": false
-        },
-        {
-          "index": 64,
-          "lane": -1,
-          "source": "buffer",
-          "dish": "A",
-          "tick": 55,
+          "tick": 29,
           "available_choices": 1,
           "valid_choices": 1,
           "error_chance": 0.0,
@@ -1219,38 +927,38 @@
         }
       ],
       "winRates": {
-        "random": 0.0,
+        "random": 0.75,
         "greedy": 1.0,
         "lookahead2": 1.0
       },
-      "simRuns": 260
+      "simRuns": 193
     },
     {
-      "difficulty": 9,
+      "difficulty": 8,
       "params": {
-        "difficulty": 9,
-        "numVarieties": 8,
+        "difficulty": 8,
+        "numVarieties": 7,
         "numSeats": 5,
         "numCustomers": 8,
         "numQueues": 5,
-        "targetMCR": 0.26
+        "targetMCR": 0.3
       },
       "customers": [
         [
           "A",
-          6
-        ],
-        [
-          "B",
           7
         ],
         [
-          "C",
+          "B",
           6
         ],
         [
+          "C",
+          7
+        ],
+        [
           "D",
-          8
+          7
         ],
         [
           "E",
@@ -1258,86 +966,88 @@
         ],
         [
           "F",
-          6
+          8
         ],
         [
           "G",
-          7
+          6
         ],
         [
-          "H",
-          6
+          "A",
+          7
         ]
       ],
       "queues": [
         [
-          "B",
-          "B",
-          "F",
           "A",
-          "F",
-          "F",
-          "F",
+          "A",
+          "A",
+          "A",
+          "B",
+          "B",
+          "D",
+          "D",
           "G",
           "G",
-          "G",
-          "G",
-          "G"
-        ],
-        [
-          "G",
-          "G",
-          "F",
-          "F",
-          "H",
-          "H",
-          "C",
+          "A",
           "A"
         ],
         [
-          "E",
-          "E",
-          "E",
-          "E",
-          "D",
-          "D",
-          "D",
-          "D",
+          "G",
+          "G",
           "C",
-          "C",
-          "C",
-          "B",
+          "A",
+          "A",
           "D",
           "D",
+          "A",
+          "A",
           "D"
         ],
         [
-          "B",
-          "B",
-          "B",
-          "A",
-          "D",
-          "H",
-          "H",
-          "H",
-          "H"
+          "E",
+          "E",
+          "G",
+          "G",
+          "C",
+          "F",
+          "F",
+          "C",
+          "C"
         ],
         [
+          "E",
           "B",
-          "C",
-          "C",
+          "B",
+          "B",
+          "B",
+          "E",
+          "E",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F"
+        ],
+        [
           "A",
           "A",
+          "A",
+          "A",
+          "C",
+          "C",
+          "C",
+          "D",
+          "D",
           "E",
           "E",
-          "E",
-          "A"
+          "F"
         ]
       ],
       "solvable": true,
       "approxSolve": true,
       "mcr": 0.22,
-      "totalMoves": 53,
+      "totalMoves": 56,
       "criticalMoves": 0,
       "bufferPeak": null,
       "completionTicks": null,
@@ -1346,28 +1056,28 @@
           "index": 1,
           "lane": 0,
           "source": "queue",
-          "dish": "B",
+          "dish": "A",
           "tick": 0
         },
         {
           "index": 2,
-          "lane": 2,
+          "lane": 0,
           "source": "queue",
-          "dish": "E",
+          "dish": "A",
           "tick": 0
         },
         {
           "index": 3,
-          "lane": 3,
+          "lane": 0,
           "source": "queue",
-          "dish": "B",
+          "dish": "A",
           "tick": 0
         },
         {
           "index": 4,
-          "lane": 4,
+          "lane": 0,
           "source": "queue",
-          "dish": "B",
+          "dish": "A",
           "tick": 0
         },
         {
@@ -1375,351 +1085,372 @@
           "lane": 0,
           "source": "queue",
           "dish": "B",
-          "tick": 1
+          "tick": 0
         },
         {
           "index": 6,
-          "lane": 2,
+          "lane": 0,
           "source": "queue",
-          "dish": "E",
-          "tick": 1
+          "dish": "B",
+          "tick": 0
         },
         {
           "index": 7,
-          "lane": 4,
+          "lane": 0,
           "source": "queue",
-          "dish": "C",
-          "tick": 2
+          "dish": "D",
+          "tick": 0
         },
         {
           "index": 8,
-          "lane": 4,
+          "lane": 0,
           "source": "queue",
-          "dish": "C",
-          "tick": 3
+          "dish": "D",
+          "tick": 0
         },
         {
           "index": 9,
           "lane": 2,
           "source": "queue",
           "dish": "E",
-          "tick": 4
+          "tick": 0
         },
         {
           "index": 10,
           "lane": 2,
           "source": "queue",
           "dish": "E",
-          "tick": 5
+          "tick": 0
         },
         {
           "index": 11,
-          "lane": 2,
+          "lane": 3,
           "source": "queue",
-          "dish": "D",
-          "tick": 6
+          "dish": "E",
+          "tick": 0
         },
         {
           "index": 12,
+          "lane": 3,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0
+        },
+        {
+          "index": 13,
+          "lane": 3,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0
+        },
+        {
+          "index": 14,
+          "lane": 3,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0
+        },
+        {
+          "index": 15,
+          "lane": 3,
+          "source": "queue",
+          "dish": "B",
+          "tick": 0
+        },
+        {
+          "index": 16,
+          "lane": 3,
+          "source": "queue",
+          "dish": "E",
+          "tick": 0
+        },
+        {
+          "index": 17,
+          "lane": 3,
+          "source": "queue",
+          "dish": "E",
+          "tick": 5
+        },
+        {
+          "index": 18,
+          "lane": 4,
+          "source": "queue",
+          "dish": "A",
+          "tick": 5
+        },
+        {
+          "index": 19,
           "lane": 4,
           "source": "queue",
           "dish": "A",
           "tick": 6
         },
         {
-          "index": 13,
-          "lane": 2,
+          "index": 20,
+          "lane": 4,
           "source": "queue",
-          "dish": "D",
-          "tick": 7
+          "dish": "A",
+          "tick": 6
         },
         {
-          "index": 14,
+          "index": 21,
           "lane": 4,
           "source": "queue",
           "dish": "A",
           "tick": 7
         },
         {
-          "index": 15,
-          "lane": 2,
+          "index": 22,
+          "lane": 4,
+          "source": "queue",
+          "dish": "C",
+          "tick": 7
+        },
+        {
+          "index": 23,
+          "lane": 4,
+          "source": "queue",
+          "dish": "C",
+          "tick": 7
+        },
+        {
+          "index": 24,
+          "lane": 4,
+          "source": "queue",
+          "dish": "C",
+          "tick": 8
+        },
+        {
+          "index": 25,
+          "lane": 4,
           "source": "queue",
           "dish": "D",
           "tick": 8
         },
         {
-          "index": 16,
-          "lane": 2,
+          "index": 26,
+          "lane": 4,
           "source": "queue",
           "dish": "D",
           "tick": 9
         },
         {
-          "index": 17,
-          "lane": 2,
-          "source": "queue",
-          "dish": "C",
-          "tick": 10
-        },
-        {
-          "index": 18,
-          "lane": 2,
-          "source": "queue",
-          "dish": "C",
-          "tick": 11
-        },
-        {
-          "index": 19,
-          "lane": 2,
-          "source": "queue",
-          "dish": "C",
-          "tick": 12
-        },
-        {
-          "index": 20,
-          "lane": 2,
-          "source": "queue",
-          "dish": "B",
-          "tick": 13
-        },
-        {
-          "index": 21,
-          "lane": 2,
-          "source": "queue",
-          "dish": "D",
-          "tick": 14
-        },
-        {
-          "index": 22,
-          "lane": 2,
-          "source": "queue",
-          "dish": "D",
-          "tick": 15
-        },
-        {
-          "index": 23,
-          "lane": 2,
-          "source": "queue",
-          "dish": "D",
-          "tick": 16
-        },
-        {
-          "index": 24,
-          "lane": 3,
-          "source": "queue",
-          "dish": "B",
-          "tick": 18
-        },
-        {
-          "index": 25,
-          "lane": 3,
-          "source": "queue",
-          "dish": "B",
-          "tick": 19
-        },
-        {
-          "index": 26,
-          "lane": 3,
-          "source": "queue",
-          "dish": "A",
-          "tick": 20
-        },
-        {
           "index": 27,
-          "lane": 3,
+          "lane": 4,
           "source": "queue",
-          "dish": "D",
-          "tick": 21
+          "dish": "E",
+          "tick": 10
         },
         {
           "index": 28,
           "lane": 4,
           "source": "queue",
           "dish": "E",
-          "tick": 23
+          "tick": 10
         },
         {
           "index": 29,
-          "lane": 4,
+          "lane": 3,
           "source": "queue",
-          "dish": "E",
-          "tick": 23
+          "dish": "F",
+          "tick": 11
         },
         {
           "index": 30,
-          "lane": 4,
+          "lane": 3,
           "source": "queue",
-          "dish": "E",
-          "tick": 23
+          "dish": "F",
+          "tick": 11
         },
         {
           "index": 31,
-          "lane": 4,
+          "lane": 3,
           "source": "queue",
-          "dish": "A",
-          "tick": 23
+          "dish": "F",
+          "tick": 12
         },
         {
           "index": 32,
-          "lane": 0,
+          "lane": 3,
           "source": "queue",
           "dish": "F",
-          "tick": 27
+          "tick": 12
         },
         {
           "index": 33,
-          "lane": 0,
+          "lane": 3,
           "source": "queue",
-          "dish": "A",
-          "tick": 28
+          "dish": "F",
+          "tick": 12
         },
         {
           "index": 34,
-          "lane": 0,
+          "lane": 4,
           "source": "queue",
           "dish": "F",
-          "tick": 29
+          "tick": 12
         },
         {
           "index": 35,
           "lane": 0,
           "source": "queue",
-          "dish": "F",
-          "tick": 30
+          "dish": "G",
+          "tick": 17
         },
         {
           "index": 36,
           "lane": 0,
           "source": "queue",
-          "dish": "F",
-          "tick": 31
+          "dish": "G",
+          "tick": 17
         },
         {
           "index": 37,
-          "lane": 0,
+          "lane": 1,
           "source": "queue",
           "dish": "G",
-          "tick": 32
+          "tick": 17
         },
         {
           "index": 38,
-          "lane": 0,
+          "lane": 1,
           "source": "queue",
           "dish": "G",
-          "tick": 33
+          "tick": 17
         },
         {
           "index": 39,
-          "lane": 0,
-          "source": "queue",
-          "dish": "G",
-          "tick": 34
-        },
-        {
-          "index": 40,
-          "lane": 0,
-          "source": "queue",
-          "dish": "G",
-          "tick": 35
-        },
-        {
-          "index": 41,
-          "lane": 0,
-          "source": "queue",
-          "dish": "G",
-          "tick": 36
-        },
-        {
-          "index": 42,
-          "lane": 1,
-          "source": "queue",
-          "dish": "G",
-          "tick": 38
-        },
-        {
-          "index": 43,
-          "lane": 1,
-          "source": "queue",
-          "dish": "G",
-          "tick": 39
-        },
-        {
-          "index": 44,
-          "lane": 1,
-          "source": "queue",
-          "dish": "F",
-          "tick": 40
-        },
-        {
-          "index": 45,
-          "lane": 1,
-          "source": "queue",
-          "dish": "F",
-          "tick": 41
-        },
-        {
-          "index": 46,
-          "lane": 1,
-          "source": "queue",
-          "dish": "H",
-          "tick": 42
-        },
-        {
-          "index": 47,
-          "lane": 1,
-          "source": "queue",
-          "dish": "H",
-          "tick": 43
-        },
-        {
-          "index": 48,
           "lane": 1,
           "source": "queue",
           "dish": "C",
-          "tick": 44
+          "tick": 17
+        },
+        {
+          "index": 40,
+          "lane": 2,
+          "source": "queue",
+          "dish": "G",
+          "tick": 17
+        },
+        {
+          "index": 41,
+          "lane": 2,
+          "source": "queue",
+          "dish": "G",
+          "tick": 17
+        },
+        {
+          "index": 42,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 17
+        },
+        {
+          "index": 43,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 17
+        },
+        {
+          "index": 44,
+          "lane": 2,
+          "source": "queue",
+          "dish": "F",
+          "tick": 17
+        },
+        {
+          "index": 45,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 17
+        },
+        {
+          "index": 46,
+          "lane": 2,
+          "source": "queue",
+          "dish": "C",
+          "tick": 18
+        },
+        {
+          "index": 47,
+          "lane": -1,
+          "source": "buffer",
+          "dish": "A",
+          "tick": 24
+        },
+        {
+          "index": 48,
+          "lane": 0,
+          "source": "queue",
+          "dish": "A",
+          "tick": 24
         },
         {
           "index": 49,
-          "lane": 1,
+          "lane": 0,
           "source": "queue",
           "dish": "A",
-          "tick": 45
+          "tick": 24
         },
         {
           "index": 50,
-          "lane": 3,
+          "lane": 1,
           "source": "queue",
-          "dish": "H",
-          "tick": 48
+          "dish": "A",
+          "tick": 24
         },
         {
           "index": 51,
-          "lane": 3,
+          "lane": 1,
           "source": "queue",
-          "dish": "H",
-          "tick": 49
+          "dish": "A",
+          "tick": 24
         },
         {
           "index": 52,
-          "lane": 3,
+          "lane": 1,
           "source": "queue",
-          "dish": "H",
-          "tick": 50
+          "dish": "D",
+          "tick": 24
         },
         {
           "index": 53,
-          "lane": 3,
+          "lane": 1,
           "source": "queue",
-          "dish": "H",
-          "tick": 51
+          "dish": "D",
+          "tick": 24
+        },
+        {
+          "index": 54,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 24
+        },
+        {
+          "index": 55,
+          "lane": 1,
+          "source": "queue",
+          "dish": "A",
+          "tick": 24
+        },
+        {
+          "index": 56,
+          "lane": 1,
+          "source": "queue",
+          "dish": "D",
+          "tick": 24
         }
       ],
       "winRates": {
-        "random": 0.0,
+        "random": 0.5,
         "greedy": 1.0,
         "lookahead2": 1.0
       },
-      "simRuns": 271
+      "simRuns": 196
     }
   ]
 }

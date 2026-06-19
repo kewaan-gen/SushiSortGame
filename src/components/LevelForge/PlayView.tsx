@@ -303,53 +303,67 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
             </div>
             {!bufferEntryFree(gs) && gs.buffer.length > 0 && (
               <p className="text-[9px] font-mono text-amber-600 mt-1">
-                Re-entry slot busy — wait a tick before sending a dock plate back.
+                Belt is full — clear some space before sending a dock plate back.
               </p>
             )}
           </div>
 
-          {/* Dispatch lanes */}
+          {/* Dispatch lanes — full columns (front on top), tap a column to send its front plate */}
           <div className="w-full max-w-md">
             <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 block mb-1.5">
-              Dispatch lanes — tap the front plate
+              Dispatch lanes — tap a column (front on top, any lane any time)
             </span>
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center items-start">
               {gs.queues.map((lane, li) => {
-                const dispatchable = laneDispatchable(gs, li);
+                const dispatchable = laneDispatchable(gs, li) && status === 'playing';
                 const isRecommended = recommendedLane === li && status === 'playing';
-                const front = lane[0];
                 return (
-                  <div key={li} className="flex flex-col items-center gap-1">
-                    <div className="text-[9px] font-mono text-slate-500">Q{li}</div>
-                    <button
-                      onClick={() => handleDispatch(li)}
-                      disabled={!dispatchable}
-                      className={`relative p-2 rounded-xl border-2 transition cursor-pointer disabled:cursor-not-allowed ${
-                        isRecommended
-                          ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-200'
-                          : dispatchable
-                          ? 'border-slate-300 bg-white hover:border-violet-400 hover:bg-violet-50'
-                          : 'border-slate-200 bg-slate-50 opacity-50'
+                  <button
+                    key={li}
+                    onClick={() => handleDispatch(li)}
+                    disabled={!dispatchable}
+                    className={`relative flex-1 max-w-[84px] rounded-2xl border-2 p-2 transition cursor-pointer disabled:cursor-not-allowed ${
+                      isRecommended
+                        ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-200'
+                        : dispatchable
+                        ? 'border-slate-300 bg-white hover:border-violet-400 hover:bg-violet-50'
+                        : 'border-slate-200 bg-slate-50 opacity-60'
+                    }`}
+                  >
+                    <div
+                      className={`text-[9px] font-mono font-bold text-center mb-1.5 ${
+                        isRecommended ? 'text-emerald-700' : 'text-slate-500'
                       }`}
                     >
+                      Q{li}
                       {isRecommended && (
                         <motion.span
                           initial={{ opacity: 0.4 }}
                           animate={{ opacity: 1 }}
                           transition={{ repeat: Infinity, repeatType: 'reverse', duration: 0.7 }}
-                          className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-mono font-bold text-emerald-600 flex items-center gap-0.5"
+                          className="ml-1 inline-flex items-center text-emerald-600"
                         >
                           <Target className="w-2.5 h-2.5" />
                         </motion.span>
                       )}
-                      {front ? <DishChip dish={front} size={36} /> : (
-                        <div className="w-9 h-9 flex items-center justify-center text-[9px] font-mono text-slate-400">
-                          empty
-                        </div>
+                    </div>
+                    <div className="flex flex-col gap-1 items-center max-h-[210px] overflow-y-auto">
+                      {lane.length === 0 ? (
+                        <span className="text-[9px] font-mono text-slate-400 py-2">empty</span>
+                      ) : (
+                        lane.map((dish, di) => (
+                          <DishChip
+                            key={di}
+                            dish={dish}
+                            size={di === 0 ? 34 : 24}
+                            dim={di !== 0}
+                            ring={di === 0 && isRecommended}
+                          />
+                        ))
                       )}
-                    </button>
-                    <div className="text-[9px] font-mono text-slate-400">{lane.length}</div>
-                  </div>
+                    </div>
+                    <div className="text-[9px] font-mono text-slate-400 text-center mt-1">{lane.length}</div>
+                  </button>
                 );
               })}
             </div>
@@ -381,7 +395,7 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
         {/* Live queues */}
         <div className="px-5 py-4 border-b border-slate-200">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 block mb-2">
-            Queues (front at bottom)
+            Queues (front on top)
           </span>
           <div className="flex gap-2">
             {gs.queues.map((lane, li) => {
@@ -408,7 +422,7 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                     Q{li}
                     {isRecommended && <span className="block text-[7px]">NEXT</span>}
                   </div>
-                  <div className="flex flex-col-reverse gap-1 items-center min-h-[24px]">
+                  <div className="flex flex-col gap-1 items-center min-h-[24px]">
                     {lane.length === 0 ? (
                       <span className="text-[8px] font-mono text-slate-300 py-1">empty</span>
                     ) : (

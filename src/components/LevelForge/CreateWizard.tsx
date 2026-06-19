@@ -7,7 +7,7 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Check, RefreshCw, BrainCircuit, Cpu } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, RefreshCw, BrainCircuit, Cpu, X } from 'lucide-react';
 import { ForgeLevel, ForgeParams } from '../../forge/types';
 import {
   paramsForDifficulty,
@@ -15,11 +15,8 @@ import {
   ratingForDifficulty,
   naiveWinRate,
 } from '../../forge/difficulty';
-import {
-  generateLevelAsync,
-  currentIntelligence,
-  GenProgress,
-} from '../../forge/generator';
+import { currentIntelligence, GenProgress } from '../../forge/generator';
+import { generateLevelManaged, hardwareConcurrency } from '../../forge/forgeClient';
 import {
   DishChip,
   Stars,
@@ -47,6 +44,7 @@ export const CreateWizard: React.FC<Props> = ({ onCancel, onSave }) => {
   const [progress, setProgress] = useState<GenProgress | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const runIdRef = useRef(0);
+  const cancelRef = useRef<null | (() => void)>(null);
 
   const params = useMemo(
     () => paramsForDifficulty(difficulty, overrides),
@@ -63,7 +61,7 @@ export const CreateWizard: React.FC<Props> = ({ onCancel, onSave }) => {
     // Defer so the spinner paints before work starts.
     await new Promise((r) => setTimeout(r, 30));
 
-    const level = await generateLevelAsync(difficulty, { overrides }, (p) => {
+    const handle = generateLevelManaged(difficulty, { overrides }, (p) => {
       if (runIdRef.current !== myRun) return;
       setProgress(p);
       setLog((prev) => {
@@ -71,11 +69,29 @@ export const CreateWizard: React.FC<Props> = ({ onCancel, onSave }) => {
         return [...prev.slice(-40), p.message];
       });
     });
+    cancelRef.current = handle.cancel;
 
-    if (runIdRef.current !== myRun) return;
-    if (name.trim()) level.name = name.trim();
-    setGenerated(level);
+    try {
+      const level = await handle.promise;
+      if (runIdRef.current !== myRun) return;
+      if (name.trim()) level.name = name.trim();
+      setGenerated(level);
+      setBusy(false);
+    } catch (err) {
+      if (runIdRef.current !== myRun) return;
+      setBusy(false);
+      const aborted = err instanceof DOMException && err.name === 'AbortError';
+      if (!aborted) setLog((prev) => [...prev, `Error: ${String(err)}`]);
+    }
+  };
+
+  const cancelGenerate = () => {
+    runIdRef.current++; // ignore any late messages from this run
+    cancelRef.current?.();
+    cancelRef.current = null;
     setBusy(false);
+    setProgress(null);
+    setStep(1);
   };
 
   const goNext = () => {
@@ -200,7 +216,7 @@ export const CreateWizard: React.FC<Props> = ({ onCancel, onSave }) => {
           {step === 2 && (
             <div className={`${PANEL} p-6`}>
               {busy || !generated ? (
-                <GenerationConsole progress={progress} log={log} />
+                <GenerationConsole progress={progress} log={log} onCancel={cancelGenerate} />
               ) : (
                 <GeneratedReview level={generated} onRegenerate={runGenerate} />
               )}
@@ -248,13 +264,15 @@ const PHASE_LABEL: Record<GenProgress['phase'], string> = {
   done: 'Done',
 };
 
-const GenerationConsole: React.FC<{ progress: GenProgress | null; log: string[] }> = ({
-  progress,
-  log,
-}) => {
+const GenerationConsole: React.FC<{
+  progress: GenProgress | null;
+  log: string[];
+  onCancel: () => void;
+}> = ({ progress, log, onCancel }) => {
   const pct = progress
     ? Math.min(100, Math.round((progress.simsDone / Math.max(1, progress.simBudget)) * 100))
     : 0;
+  const cores = hardwareConcurrency();
   return (
     <div className="py-4">
       <div className="flex items-center gap-3 mb-4">
@@ -266,7 +284,7 @@ const GenerationConsole: React.FC<{ progress: GenProgress | null; log: string[] 
             {progress ? PHASE_LABEL[progress.phase] : 'Booting forge…'}
           </p>
           <p className="font-mono text-[11px] text-slate-500">
-            Running solver simulations to find a solvable, calibrated level
+            Simulating on a background thread · {cores}-core device · UI stays responsive
           </p>
         </div>
         <div className="text-right">
@@ -308,6 +326,12 @@ const GenerationConsole: React.FC<{ progress: GenProgress | null; log: string[] 
             </div>
           ))
         )}
+      </div>
+
+      <div className="flex justify-end mt-3">
+        <button onClick={onCancel} className={`${GHOST_BTN} px-4 py-2 text-xs flex items-center gap-2`}>
+          <X className="w-3.5 h-3.5" /> Cancel
+        </button>
       </div>
     </div>
   );
@@ -423,7 +447,7 @@ const GeneratedReview: React.FC<{ level: ForgeLevel; onRegenerate: () => void }>
           {level.queues.map((lane, li) => (
             <div key={li} className="shrink-0">
               <div className="text-[10px] font-mono text-slate-500 text-center mb-1">Q{li}</div>
-              <div className="flex flex-col-reverse gap-1 p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex flex-col gap-1 p-2 rounded-xl bg-slate-50 border border-slate-200">
                 {lane.map((dish, di) => (
                   <DishChip key={di} dish={dish} size={26} dim={di !== 0} />
                 ))}

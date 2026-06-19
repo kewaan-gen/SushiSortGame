@@ -108,11 +108,24 @@ export function isVictory(state: GameState, level: LevelDef): boolean {
   return !state.failed && remainingDemand(state, level) === 0;
 }
 
-/** Is a lane currently dispatchable (has a plate and its entry slot is free)? */
+/** First free belt slot scanning forward from `start` (wraps); -1 if the belt is full. */
+export function firstFreeSlotFrom(state: GameState, start: number): number {
+  for (let k = 0; k < FIXED.beltSlots; k++) {
+    const s = (start + k) % FIXED.beltSlots;
+    if (!state.belt.some((p) => p.slot === s)) return s;
+  }
+  return -1;
+}
+
+/**
+ * Is a lane currently dispatchable? A lane can be tapped at ANY time as long as it has
+ * a plate and the belt has at least one free slot (no entry-slot "wait"). If the lane's
+ * own slot is busy, the plate enters at the nearest free slot ahead.
+ */
 export function laneDispatchable(state: GameState, lane: number): boolean {
   if (lane >= state.queues.length) return false;
   if (state.queues[lane].length === 0) return false;
-  return !state.belt.some((p) => p.slot === lane);
+  return state.belt.length < FIXED.beltSlots;
 }
 
 export function dispatchableLanes(state: GameState): number[] {
@@ -123,9 +136,9 @@ export function dispatchableLanes(state: GameState): number[] {
   return out;
 }
 
-/** Is the dock re-entry slot currently free? */
+/** Can a dock plate be re-dispatched right now (i.e. the belt has room)? */
 export function bufferEntryFree(state: GameState): boolean {
-  return !state.belt.some((p) => p.slot === BUFFER_ENTRY_SLOT);
+  return state.belt.length < FIXED.beltSlots;
 }
 
 /** Distinct dock dishes that can be re-dispatched right now. */
@@ -188,9 +201,11 @@ export function dispatch(prev: GameState, level: LevelDef, lane: number): GameSt
   const state = cloneState(prev);
   if (!laneDispatchable(state, lane)) return state; // no-op (caller should avoid)
 
+  const entrySlot = firstFreeSlotFrom(state, lane);
+  if (entrySlot < 0) return state; // belt full, no-op
+
   const dish = state.queues[lane].shift()!;
   const seatSlots = seatSlotsFor(level.numSeats);
-  const entrySlot = lane;
 
   // Instant interception at the entry slot.
   let eaten = false;
@@ -216,7 +231,8 @@ export function dispatchBuffer(prev: GameState, level: LevelDef, dish: DishLette
   const state = cloneState(prev);
   const idx = state.buffer.indexOf(dish);
   if (idx < 0) return state; // no-op
-  if (!bufferEntryFree(state)) return state; // entry blocked
+  const entrySlot = firstFreeSlotFrom(state, BUFFER_ENTRY_SLOT);
+  if (entrySlot < 0) return state; // belt full
 
   state.buffer.splice(idx, 1);
   const seatSlots = seatSlotsFor(level.numSeats);
@@ -224,13 +240,13 @@ export function dispatchBuffer(prev: GameState, level: LevelDef, dish: DishLette
   // Instant interception if a seat sits exactly at the re-entry slot.
   let eaten = false;
   for (let s = 0; s < seatSlots.length; s++) {
-    if (seatSlots[s] === BUFFER_ENTRY_SLOT && tryFeed(state, level, s, dish)) {
+    if (seatSlots[s] === entrySlot && tryFeed(state, level, s, dish)) {
       eaten = true;
       break;
     }
   }
   if (!eaten) {
-    state.belt.push({ dish, slot: BUFFER_ENTRY_SLOT, steps: 0 });
+    state.belt.push({ dish, slot: entrySlot, steps: 0 });
   }
   return state;
 }

@@ -11,8 +11,10 @@
  *      arrangements, keeping only SOLVABLE ones and picking the best fit.
  *   6. Records the outcome back into the brain so the forge gets smarter each run.
  *
- * `generateLevelAsync` exposes live progress (simulation counts, phase text) and
- * yields to the UI between batches. `generateLevel` is the synchronous convenience.
+ * `runGeneration` is the synchronous core (run inside a Web Worker via forgeClient).
+ * It scouts ~1000 cheap Monte Carlo playouts across candidates, shortlists the best
+ * solvable ones, exact-verifies the shortlist, and returns the single best level plus
+ * the reinforced brain. It accepts a `shouldStop` hook for time budget / cancellation.
  */
 
 import {
@@ -192,45 +194,103 @@ export interface GenProgress {
   intelligence: number;
 }
 
-const delay = (ms = 0) => new Promise<void>((r) => setTimeout(r, ms));
+interface ScoutCtx {
+  params: ForgeParams;
+  customers: ForgeCustomer[];
+  pool: DishLetter[];
+  learnedWeights: Record<number, number>;
+  targetNaive: number;
+}
 
-interface CandidateResult {
+interface ShortlistEntry {
   queues: DishLetter[][];
-  sim: SimResult;
+  naive: number;
   gap: number;
 }
 
+/** One cheap scout: arrange a candidate, prove solvable via strong policy, estimate felt difficulty. */
+function scoutCandidate(
+  ctx: ScoutCtx,
+  rng: () => number,
+): { queues: DishLetter[][]; solvable: boolean; naive: number; sims: number } {
+  const jittered: Record<number, number> = {};
+  for (const k of Object.keys(ctx.learnedWeights)) {
+    const n = Number(k);
+    jittered[n] = Math.max(0.001, ctx.learnedWeights[n] * (0.8 + rng() * 0.4));
+  }
+  const queues = arrangeQueues(ctx.pool, ctx.params.numQueues, jittered, rng);
+  const level: LevelDef = { queues, customers: ctx.customers, numSeats: ctx.params.numSeats };
+
+  const ps = policySolve(level, rng); // strong (lookahead/greedy) solvability check
+  let sims = 3; // ~cost of the policy probe
+  let naive = 0;
+  if (ps.solvable) {
+    const wr = winRate(level, 'random', 8, rng);
+    sims += wr.runs;
+    naive = wr.rate;
+  }
+  return { queues, solvable: ps.solvable, naive, sims };
+}
+
+/** Exact-verify a shortlisted candidate to get a real move plan + MCR (approx fallback if capped). */
+function verifyCandidate(
+  queues: DishLetter[][],
+  ctx: ScoutCtx,
+  naive: number,
+  rng: () => number,
+): SimResult {
+  const level: LevelDef = { queues, customers: ctx.customers, numSeats: ctx.params.numSeats };
+  let sim = solveLevel(level, { maxStates: 60_000 });
+  if (!sim.solvable) {
+    const ps = policySolve(level, rng);
+    if (ps.solvable) sim = approxSimFromPlayout(ps.moves, ps.bufferPeak, naive);
+  } else if (sim.naiveWinRate == null) {
+    sim.naiveWinRate = naive;
+  }
+  return sim;
+}
+
 /**
- * Async, observable generator. Runs up to a simulation budget of Monte Carlo playouts
- * across candidate arrangements, keeps only solvable candidates, learns from the result,
- * and always returns a solvable level.
+ * The intelligent generation core (synchronous; runs in a Web Worker).
+ *
+ * Phase 1 — SCOUT: run ~`simBudget` cheap Monte Carlo playouts across many candidate
+ *   arrangements, keeping a top-K shortlist of the solvable ones whose felt-difficulty
+ *   (naive win-rate) best matches the target.
+ * Phase 2 — VERIFY: exact-solve only the shortlist (a handful), producing real move
+ *   plans + MCR, and pick the single best.
+ * Phase 3 — INSURANCE: if nothing verified, construct a guaranteed-solvable layout.
+ *
+ * `shouldStop()` lets the caller enforce a wall-clock budget or cancellation. Always
+ * returns a solvable level plus the reinforced brain (to be persisted by the caller).
  */
-export async function generateLevelAsync(
+export function runGeneration(
   difficulty: number,
-  opts: GenerateOptions = {},
+  opts: GenerateOptions,
+  brain: ForgeBrain,
   onProgress?: (p: GenProgress) => void,
-): Promise<ForgeLevel> {
+  shouldStop?: () => boolean,
+): { level: ForgeLevel; brain: ForgeBrain } {
   const seed = opts.seed ?? (Date.now() ^ (levelCounter++ << 16)) >>> 0;
   const rng = mulberry32(seed);
   const params = paramsForDifficulty(difficulty, opts.overrides);
   const customers = buildCustomers(params, difficulty, rng);
   const pool = buildPool(customers);
 
-  const brain = loadBrain();
   const intelligence = intelligenceLevel(brain);
-  const baseWeights = runLengthWeights(difficulty);
-  const learnedWeights = applyBias(baseWeights, brain, difficulty);
+  const learnedWeights = applyBias(runLengthWeights(difficulty), brain, difficulty);
   const targetNaive = CALIBRATED_NAIVE_WIN_RATE[Math.max(1, Math.min(10, Math.round(difficulty))) - 1];
+  const ctx: ScoutCtx = { params, customers, pool, learnedWeights, targetNaive };
 
   const simBudget = opts.simBudget ?? 1000;
-  const maxCandidates = opts.candidates ?? 120;
-  const naiveRunsPerCandidate = 10;
+  const maxCandidates = opts.candidates ?? 240;
+  const K = 6;
 
   let simsDone = 0;
   let solvableFound = 0;
-  let best: CandidateResult | null = null;
+  let candidate = 0;
+  const shortlist: ShortlistEntry[] = [];
 
-  const report = (phase: GenProgress['phase'], message: string, candidate: number) =>
+  const report = (phase: GenProgress['phase'], message: string) =>
     onProgress?.({
       phase,
       message,
@@ -239,142 +299,73 @@ export async function generateLevelAsync(
       candidate,
       candidates: maxCandidates,
       solvableFound,
-      bestGap: best ? best.gap : null,
+      bestGap: shortlist.length ? shortlist[0].gap : null,
       intelligence,
     });
 
-  report('init', `Booting forge brain (intelligence Lv.${intelligence}) · target MCR ${params.targetMCR.toFixed(2)}`, 0);
-  await delay(20);
+  report('init', `Booting forge brain (Lv.${intelligence}) · target naive-win ${Math.round(targetNaive * 100)}% · ${simBudget}-sim search`);
 
-  for (let c = 0; c < maxCandidates && simsDone < simBudget; c++) {
-    // Slight exploration jitter so we don't collapse onto one strategy.
-    const jittered: Record<number, number> = {};
-    for (const k of Object.keys(learnedWeights)) {
-      const n = Number(k);
-      jittered[n] = Math.max(0.001, learnedWeights[n] * (0.8 + rng() * 0.4));
+  // Phase 1: scout.
+  for (candidate = 1; candidate <= maxCandidates && simsDone < simBudget; candidate++) {
+    if (shouldStop?.()) break;
+    const sc = scoutCandidate(ctx, rng);
+    simsDone += sc.sims;
+
+    if (sc.solvable) {
+      solvableFound++;
+      const gap = Math.abs(sc.naive - targetNaive);
+      shortlist.push({ queues: sc.queues, naive: sc.naive, gap });
+      shortlist.sort((a, b) => a.gap - b.gap);
+      if (shortlist.length > K) shortlist.length = K;
+      report(
+        'optimizing',
+        `Simulation ${simsDone}/${simBudget} · solvable ✓ (naive ${Math.round(sc.naive * 100)}%) · ${solvableFound} found · best gap ${shortlist[0].gap.toFixed(3)}`,
+      );
+    } else {
+      report('searching', `Simulation ${simsDone}/${simBudget} · candidate ${candidate} unsolvable ✗ · arranging next queue structure`);
     }
-    const queues = arrangeQueues(pool, params.numQueues, jittered, rng);
-    const level: LevelDef = { queues, customers, numSeats: params.numSeats };
-
-    report('searching', `Simulation ${c + 1}/${maxCandidates} · arranging & solving queue structure`, c + 1);
-
-    let sim = solveLevel(level, { maxStates: 45_000 });
-    let solvable = sim.solvable;
-
-    // Capped exact search that couldn't prove a win: try strong policies before discarding.
-    if (!solvable && sim.approxSolve) {
-      report('validating', `Simulation ${c + 1}/${maxCandidates} · deep search capped, validating with lookahead AI`, c + 1);
-      const ps = policySolve(level, rng);
-      simsDone += 2;
-      if (ps.solvable) {
-        const wr = winRate(level, 'random', naiveRunsPerCandidate, rng);
-        simsDone += wr.runs;
-        sim = approxSimFromPlayout(ps.moves, ps.bufferPeak, wr.rate);
-        solvable = true;
-      }
-    } else if (solvable) {
-      const wr = winRate(level, 'random', naiveRunsPerCandidate, rng);
-      simsDone += wr.runs;
-      sim.naiveWinRate = wr.rate;
-    }
-
-    if (!solvable) {
-      await delay(0);
-      continue;
-    }
-
-    solvableFound++;
-    // Selection: exact levels by MCR gap; approx levels by empirical naive-win-rate gap.
-    const gap = sim.approxSolve
-      ? Math.abs((sim.naiveWinRate ?? 0) - targetNaive) + 0.06
-      : Math.abs(sim.mcr - params.targetMCR);
-
-    if (best === null || gap < best.gap) {
-      best = { queues, sim, gap };
-      report('optimizing', `Found solvable level · ${solvableFound} so far · best gap ${gap.toFixed(3)}`, c + 1);
-    }
-
-    if (best.gap < 0.04 && solvableFound >= 3) break; // good enough
-    await delay(0);
   }
 
-  // Insurance: nothing solvable sampled -> constructive guaranteed-solvable arrangement.
+  // Phase 2: verify the shortlist with the exact solver, pick the best.
+  let best: { queues: DishLetter[][]; sim: SimResult; gap: number } | null = null;
+  for (let i = 0; i < shortlist.length; i++) {
+    if (shouldStop?.()) break;
+    report('validating', `Verifying shortlisted level ${i + 1}/${shortlist.length} with exact solver`);
+    const cand = shortlist[i];
+    const sim = verifyCandidate(cand.queues, ctx, cand.naive, rng);
+    if (!sim.solvable) continue;
+    const naive = sim.naiveWinRate ?? cand.naive;
+    const gap = Math.abs(naive - targetNaive) * 0.6 + Math.abs(sim.mcr - params.targetMCR) * 0.4;
+    if (best === null || gap < best.gap) best = { queues: cand.queues, sim, gap };
+  }
+
+  // Phase 3: insurance — guaranteed-solvable construction.
   if (best === null) {
-    report('validating', 'No solvable sample found — constructing a guaranteed-solvable layout', maxCandidates);
+    report('validating', 'No verified candidate — constructing a guaranteed-solvable layout');
     const queues = constructiveQueues(customers, params.numQueues);
-    const level: LevelDef = { queues, customers, numSeats: params.numSeats };
-    let sim = solveLevel(level, { maxStates: 200_000 });
-    if (!sim.solvable) {
-      const ps = policySolve(level, rng);
-      simsDone += 2;
-      const wr = winRate(level, 'random', naiveRunsPerCandidate, rng);
-      simsDone += wr.runs;
-      sim = approxSimFromPlayout(ps.moves, ps.bufferPeak, wr.rate);
-    }
+    const sim = verifyCandidate(queues, ctx, 0.05, rng);
     best = { queues, sim, gap: 0 };
     solvableFound++;
   }
 
-  report('finalizing', 'Locking optimal move plan & rating', maxCandidates);
-  await delay(10);
+  report('finalizing', 'Locking optimal move plan & difficulty rating');
 
   const sim = best.sim;
   sim.simRuns = simsDone;
   sim.difficultyIndex = computeDifficultyIndex(sim, params);
 
-  // Train: reinforce the brain toward this solvable arrangement.
+  // Reinforce the brain toward this winning arrangement.
   const updated = recordOutcome(brain, {
     difficulty,
     solvable: true,
-    mcrGap: best.gap,
+    mcrGap: Math.abs(sim.mcr - params.targetMCR),
     histogram: runLengthHistogram(best.queues),
     simRuns: simsDone,
   });
 
-  const finalLevel = finalize(best.queues, customers, params, difficulty, seed, sim);
-  report('done', `Done · ${simsDone} simulations · ${solvableFound} solvable · brain now Lv.${intelligenceLevel(updated)}`, maxCandidates);
-  return finalLevel;
-}
-
-/** Synchronous convenience (no progress UI); uses a smaller budget. */
-export function generateLevel(difficulty: number, opts: GenerateOptions = {}): ForgeLevel {
-  const seed = opts.seed ?? (Date.now() ^ (levelCounter++ << 16)) >>> 0;
-  const rng = mulberry32(seed);
-  const params = paramsForDifficulty(difficulty, opts.overrides);
-  const customers = buildCustomers(params, difficulty, rng);
-  const pool = buildPool(customers);
-  const weights = runLengthWeights(difficulty);
-  const candidates = opts.candidates ?? 26;
-
-  let best: CandidateResult | null = null;
-  for (let c = 0; c < candidates; c++) {
-    const queues = arrangeQueues(pool, params.numQueues, weights, rng);
-    const level: LevelDef = { queues, customers, numSeats: params.numSeats };
-    let sim = solveLevel(level, { maxStates: 90_000 });
-    if (!sim.solvable && sim.approxSolve) {
-      const ps = policySolve(level, rng);
-      if (ps.solvable) sim = approxSimFromPlayout(ps.moves, ps.bufferPeak, 0.1);
-    }
-    if (!sim.solvable) continue;
-    const gap = Math.abs(sim.mcr - params.targetMCR);
-    if (best === null || gap < best.gap) best = { queues, sim, gap };
-    if (gap < 0.04) break;
-  }
-
-  if (best === null) {
-    const queues = constructiveQueues(customers, params.numQueues);
-    const level: LevelDef = { queues, customers, numSeats: params.numSeats };
-    let sim = solveLevel(level, { maxStates: 200_000 });
-    if (!sim.solvable) {
-      const ps = policySolve(level, rng);
-      sim = approxSimFromPlayout(ps.moves, ps.bufferPeak, 0.1);
-    }
-    best = { queues, sim, gap: 0 };
-  }
-
-  const sim = best.sim;
-  sim.difficultyIndex = computeDifficultyIndex(sim, params);
-  return finalize(best.queues, customers, params, difficulty, seed, sim);
+  const level = finalize(best.queues, customers, params, difficulty, seed, sim);
+  report('done', `Done · ${simsDone} simulations · ${solvableFound} solvable · brain now Lv.${intelligenceLevel(updated)}`);
+  return { level, brain: updated };
 }
 
 function finalize(

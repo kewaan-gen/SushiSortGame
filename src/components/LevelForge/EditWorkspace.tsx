@@ -230,7 +230,7 @@ export const EditWorkspace: React.FC<Props> = ({ level, onCancel, onSave, onPlay
           <div>
             <p className="text-xs font-mono text-slate-500 mb-4">
               Tap a plate to select it, then use the toolbar to recolor, reorder, move lanes, or
-              delete. Front of each lane is at the bottom (dispatched first).
+              delete. Front of each lane is at the top (dispatched first).
             </p>
             <div className="flex gap-4 overflow-x-auto pb-4">
               {draft.queues.map((lane, li) => (
@@ -239,7 +239,7 @@ export const EditWorkspace: React.FC<Props> = ({ level, onCancel, onSave, onPlay
                     Lane {li}
                     <span className="block text-[9px] text-slate-400">{lane.length} plates</span>
                   </div>
-                  <div className="flex flex-col-reverse gap-1.5 items-center min-h-[40px]">
+                  <div className="flex flex-col gap-1.5 items-center min-h-[40px]">
                     {lane.map((dish, di) => (
                       <div key={di} className="relative">
                         <DishChip
@@ -254,7 +254,7 @@ export const EditWorkspace: React.FC<Props> = ({ level, onCancel, onSave, onPlay
                           }
                         />
                         {di === 0 && (
-                          <span className="absolute -left-1 -bottom-1 text-[8px] font-mono bg-emerald-500 text-black px-1 rounded-full">
+                          <span className="absolute -left-1 -top-1 text-[8px] font-mono bg-emerald-500 text-black px-1 rounded-full">
                             ▲
                           </span>
                         )}

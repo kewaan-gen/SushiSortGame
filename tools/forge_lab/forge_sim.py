@@ -124,10 +124,21 @@ def is_victory(s: State, level: Level) -> bool:
     return (not s.failed) and remaining_demand(s, level) == 0
 
 
+def first_free_slot_from(s: State, start: int) -> int:
+    """First free belt slot scanning forward from `start` (wraps); -1 if belt is full."""
+    occupied = {p.slot for p in s.belt}
+    for k in range(FIXED["beltSlots"]):
+        slot = (start + k) % FIXED["beltSlots"]
+        if slot not in occupied:
+            return slot
+    return -1
+
+
 def lane_dispatchable(s: State, lane: int) -> bool:
+    # No entry-slot wait: a lane is tappable any time it has a plate and the belt has room.
     if lane >= len(s.queues) or not s.queues[lane]:
         return False
-    return not any(p.slot == lane for p in s.belt)
+    return len(s.belt) < FIXED["beltSlots"]
 
 
 def dispatchable_lanes(s: State) -> list[int]:
@@ -135,7 +146,7 @@ def dispatchable_lanes(s: State) -> list[int]:
 
 
 def buffer_entry_free(s: State) -> bool:
-    return not any(p.slot == BUFFER_ENTRY_SLOT for p in s.belt)
+    return len(s.belt) < FIXED["beltSlots"]
 
 
 def dispatchable_buffer_dishes(s: State) -> list[str]:
@@ -193,9 +204,11 @@ def dispatch(prev: State, level: Level, lane: int) -> State:
     s = clone(prev)
     if not lane_dispatchable(s, lane):
         return s
+    entry = first_free_slot_from(s, lane)
+    if entry < 0:
+        return s
     dish = s.queues[lane].pop(0)
     slots = seat_slots_for(level.num_seats)
-    entry = lane
     eaten = False
     for si in range(len(slots)):
         if slots[si] == entry and _try_feed(s, level, si, dish):
@@ -208,17 +221,20 @@ def dispatch(prev: State, level: Level, lane: int) -> State:
 
 def dispatch_buffer(prev: State, level: Level, dish: str) -> State:
     s = clone(prev)
-    if dish not in s.buffer or not buffer_entry_free(s):
+    if dish not in s.buffer:
+        return s
+    entry = first_free_slot_from(s, BUFFER_ENTRY_SLOT)
+    if entry < 0:
         return s
     s.buffer.remove(dish)
     slots = seat_slots_for(level.num_seats)
     eaten = False
     for si in range(len(slots)):
-        if slots[si] == BUFFER_ENTRY_SLOT and _try_feed(s, level, si, dish):
+        if slots[si] == entry and _try_feed(s, level, si, dish):
             eaten = True
             break
     if not eaten:
-        s.belt.append(Plate(dish, BUFFER_ENTRY_SLOT, 0))
+        s.belt.append(Plate(dish, entry, 0))
     return s
 
 

@@ -52,7 +52,7 @@ export function loadBrain(): ForgeBrain {
   return { version: 1, totalRuns: 0, totalSims: 0, byDifficulty: {} };
 }
 
-function saveBrain(brain: ForgeBrain): void {
+export function saveBrain(brain: ForgeBrain): void {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(brain));
   } catch {
