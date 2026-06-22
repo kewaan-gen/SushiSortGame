@@ -80,13 +80,19 @@ function sampleRunLength(weights: Record<number, number>, rng: () => number): nu
   return 2;
 }
 
-function buildCustomers(params: ForgeParams, difficulty: number, rng: () => number): ForgeCustomer[] {
+function buildCustomers(
+  params: ForgeParams,
+  difficulty: number,
+  rng: () => number,
+  demandOverride?: number,
+): ForgeCustomer[] {
   const letters = DISH_LETTERS.slice(0, params.numVarieties);
-  const baseDemand = demandForDifficulty(difficulty);
+  const baseDemand = demandOverride ?? demandForDifficulty(difficulty);
   const customers: ForgeCustomer[] = [];
   for (let i = 0; i < params.numCustomers; i++) {
     const dish = letters[i % letters.length] as DishLetter;
-    const jitter = difficulty >= 5 ? Math.round((rng() - 0.5) * 2) : 0;
+    // Explicit demand (campaign) is fixed; auto demand jitters from D5 up.
+    const jitter = demandOverride == null && difficulty >= 5 ? Math.round((rng() - 0.5) * 2) : 0;
     const demand = Math.max(3, baseDemand + jitter);
     customers.push({ dish, demand });
   }
@@ -180,6 +186,8 @@ export interface GenerateOptions {
   overrides?: Partial<ForgeParams>;
   /** Total Monte Carlo playout budget (for the async generator). */
   simBudget?: number;
+  /** Fixed demand per customer (campaign use). When omitted, demand is derived from difficulty. */
+  demand?: number;
 }
 
 export interface GenProgress {
@@ -273,7 +281,7 @@ export function runGeneration(
   const seed = opts.seed ?? (Date.now() ^ (levelCounter++ << 16)) >>> 0;
   const rng = mulberry32(seed);
   const params = paramsForDifficulty(difficulty, opts.overrides);
-  const customers = buildCustomers(params, difficulty, rng);
+  const customers = buildCustomers(params, difficulty, rng, opts.demand);
   const pool = buildPool(customers);
 
   const intelligence = intelligenceLevel(brain);

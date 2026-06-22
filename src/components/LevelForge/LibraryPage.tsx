@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Sparkles,
   Upload,
+  Trophy,
 } from 'lucide-react';
 import { ForgeLevel } from '../../forge/types';
 import {
@@ -30,6 +31,7 @@ import { ratingForDifficulty } from '../../forge/difficulty';
 
 interface Props {
   levels: ForgeLevel[];
+  campaign: ForgeLevel[];
   loading: boolean;
   onCreate: () => void;
   onPlay: (level: ForgeLevel) => void;
@@ -39,8 +41,11 @@ interface Props {
   onExit: () => void;
 }
 
+type Tab = 'campaign' | 'mine';
+
 export const LibraryPage: React.FC<Props> = ({
   levels,
+  campaign,
   loading,
   onCreate,
   onPlay,
@@ -49,6 +54,7 @@ export const LibraryPage: React.FC<Props> = ({
   onImport,
   onExit,
 }) => {
+  const [tab, setTab] = useState<Tab>('campaign');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -65,7 +71,7 @@ export const LibraryPage: React.FC<Props> = ({
     <div className="w-full h-full overflow-y-auto" onClick={() => setMenuOpen(null)}>
       <div className="max-w-6xl mx-auto px-5 py-6">
         {/* Header */}
-        <header className="flex items-center justify-between mb-7">
+        <header className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <button
               onClick={onExit}
@@ -79,7 +85,7 @@ export const LibraryPage: React.FC<Props> = ({
                 <span className="text-violet-600">⚒</span> Kaizen Level Forge
               </h1>
               <p className="text-[11px] font-mono text-slate-500 tracking-wide">
-                Intelligent solver-backed level generator · {levels.length} saved
+                {campaign.length} campaign levels · {levels.length} of your own
               </p>
             </div>
           </div>
@@ -107,43 +113,82 @@ export const LibraryPage: React.FC<Props> = ({
           </div>
         </header>
 
-        {/* Empty / loading states */}
-        {loading ? (
-          <div className="text-center py-24 text-slate-500 font-mono text-sm">Loading library…</div>
-        ) : levels.length === 0 ? (
-          <div className={`${PANEL} text-center py-20 px-6`}>
-            <Sparkles className="w-10 h-10 mx-auto text-violet-600 mb-4" />
-            <h2 className="text-lg font-bold mb-1">No levels yet</h2>
-            <p className="text-sm text-slate-500 font-mono mb-6 max-w-md mx-auto">
-              Generate your first intelligently-calculated level. Pick a difficulty 1-10 and the
-              forge computes the queues, the optimal move plan, and the difficulty rating.
-            </p>
-            <button
-              onClick={onCreate}
-              className={`${ACCENT_BTN} inline-flex items-center gap-2 px-5 py-2.5 text-sm`}
-            >
-              <Plus className="w-4 h-4" /> Generate New Level
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {levels.map((level) => (
-              <LevelCard
-                key={level.id}
-                level={level}
-                menuOpen={menuOpen === level.id}
-                onToggleMenu={(e) => {
-                  e.stopPropagation();
-                  setMenuOpen(menuOpen === level.id ? null : level.id);
-                }}
-                onPlay={() => onPlay(level)}
-                onEdit={() => onEdit(level)}
-                onDownload={() => downloadLevelJSON(level)}
-                onDelete={() => setConfirmDelete(level.id)}
-              />
-            ))}
-          </div>
-        )}
+        {/* Tabs */}
+        <div className="flex items-center gap-1 mb-6 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
+          <TabButton active={tab === 'campaign'} onClick={() => setTab('campaign')}>
+            <Trophy className="w-3.5 h-3.5" /> Campaign
+            <span className="ml-1 text-[10px] opacity-70">{campaign.length}</span>
+          </TabButton>
+          <TabButton active={tab === 'mine'} onClick={() => setTab('mine')}>
+            <Sparkles className="w-3.5 h-3.5" /> My Levels
+            <span className="ml-1 text-[10px] opacity-70">{levels.length}</span>
+          </TabButton>
+        </div>
+
+        {/* Campaign tab */}
+        {tab === 'campaign' &&
+          (campaign.length === 0 ? (
+            <div className="text-center py-24 text-slate-500 font-mono text-sm">
+              Loading campaign…
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {campaign.map((level) => (
+                <LevelCard
+                  key={level.id}
+                  level={level}
+                  menuOpen={menuOpen === level.id}
+                  onToggleMenu={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(menuOpen === level.id ? null : level.id);
+                  }}
+                  onPlay={() => onPlay(level)}
+                  onDownload={() => downloadLevelJSON(level)}
+                />
+              ))}
+            </div>
+          ))}
+
+        {/* My Levels tab */}
+        {tab === 'mine' &&
+          (loading ? (
+            <div className="text-center py-24 text-slate-500 font-mono text-sm">
+              Loading library…
+            </div>
+          ) : levels.length === 0 ? (
+            <div className={`${PANEL} text-center py-20 px-6`}>
+              <Sparkles className="w-10 h-10 mx-auto text-violet-600 mb-4" />
+              <h2 className="text-lg font-bold mb-1">No levels yet</h2>
+              <p className="text-sm text-slate-500 font-mono mb-6 max-w-md mx-auto">
+                Generate your first intelligently-calculated level. Pick a difficulty 1-10 and the
+                forge computes the queues, the optimal move plan, and the difficulty rating.
+              </p>
+              <button
+                onClick={onCreate}
+                className={`${ACCENT_BTN} inline-flex items-center gap-2 px-5 py-2.5 text-sm`}
+              >
+                <Plus className="w-4 h-4" /> Generate New Level
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {levels.map((level) => (
+                <LevelCard
+                  key={level.id}
+                  level={level}
+                  menuOpen={menuOpen === level.id}
+                  onToggleMenu={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(menuOpen === level.id ? null : level.id);
+                  }}
+                  onPlay={() => onPlay(level)}
+                  onEdit={() => onEdit(level)}
+                  onDownload={() => downloadLevelJSON(level)}
+                  onDelete={() => setConfirmDelete(level.id)}
+                />
+              ))}
+            </div>
+          ))}
       </div>
 
       {/* Delete confirmation */}
@@ -191,14 +236,31 @@ export const LibraryPage: React.FC<Props> = ({
   );
 };
 
+const TabButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ active, onClick, children }) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer ${
+      active
+        ? 'bg-white text-violet-700 shadow-sm border border-slate-200'
+        : 'text-slate-500 hover:text-slate-700'
+    }`}
+  >
+    {children}
+  </button>
+);
+
 const LevelCard: React.FC<{
   level: ForgeLevel;
   menuOpen: boolean;
   onToggleMenu: (e: React.MouseEvent) => void;
   onPlay: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   onDownload: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
 }> = ({ level, menuOpen, onToggleMenu, onPlay, onEdit, onDownload, onDelete }) => {
   const rating = ratingForDifficulty(level.difficulty);
   const sim = level.sim;
@@ -238,13 +300,21 @@ const LevelCard: React.FC<{
                   label="Download JSON"
                   onClick={onDownload}
                 />
-                <MenuItem icon={<Pencil className="w-3.5 h-3.5" />} label="Edit level" onClick={onEdit} />
-                <MenuItem
-                  icon={<Trash2 className="w-3.5 h-3.5" />}
-                  label="Delete"
-                  danger
-                  onClick={onDelete}
-                />
+                {onEdit && (
+                  <MenuItem
+                    icon={<Pencil className="w-3.5 h-3.5" />}
+                    label="Edit level"
+                    onClick={onEdit}
+                  />
+                )}
+                {onDelete && (
+                  <MenuItem
+                    icon={<Trash2 className="w-3.5 h-3.5" />}
+                    label="Delete"
+                    danger
+                    onClick={onDelete}
+                  />
+                )}
               </motion.div>
             )}
           </AnimatePresence>

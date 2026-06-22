@@ -24,6 +24,7 @@ interface LevelForgeProps {
 export const LevelForge: React.FC<LevelForgeProps> = ({ onExit }) => {
   const [view, setView] = useState<View>('library');
   const [levels, setLevels] = useState<ForgeLevel[]>([]);
+  const [campaign, setCampaign] = useState<ForgeLevel[]>([]);
   const [active, setActive] = useState<ForgeLevel | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +38,19 @@ export const LevelForge: React.FC<LevelForgeProps> = ({ onExit }) => {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Lazy-load the baked 30-level campaign as its own chunk (keeps the main bundle lean).
+  useEffect(() => {
+    let alive = true;
+    import('../../forge/campaignLevels')
+      .then((m) => {
+        if (alive) setCampaign(m.CAMPAIGN_LEVELS);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const handleSave = async (level: ForgeLevel) => {
     await saveLevel(level);
@@ -92,6 +106,7 @@ export const LevelForge: React.FC<LevelForgeProps> = ({ onExit }) => {
       {view === 'library' && (
         <LibraryPage
           levels={levels}
+          campaign={campaign}
           loading={loading}
           onCreate={() => {
             setActive(null);
