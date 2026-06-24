@@ -7,7 +7,7 @@
  * highlighted), and the optimal plan with completed moves checked.
  */
 
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
@@ -17,7 +17,7 @@ import {
   Trophy,
   XCircle,
   Target,
-  Layers,
+  Users,
 } from 'lucide-react';
 import { ForgeLevel, FIXED, DishLetter } from '../../forge/types';
 import {
@@ -58,14 +58,6 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
   };
   const seatSlots = seatSlotsFor(def.numSeats);
   const plan = level.sim?.movePlan ?? [];
-
-  // Every dish variety that appears in this level (queues + customers), sorted.
-  const dishesInLevel = useMemo<DishLetter[]>(() => {
-    const set = new Set<DishLetter>();
-    level.queues.forEach((lane) => lane.forEach((d) => set.add(d)));
-    level.customers.forEach((c) => set.add(c.dish));
-    return Array.from(set).sort();
-  }, [level]);
 
   const [gs, setGs] = useState<GameState>(() => createInitialState(def));
   const [status, setStatus] = useState<Status>('playing');
@@ -143,10 +135,23 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
   const demandLeft = remainingDemand(gs, def);
   const totalDemand = level.customers.reduce((s, c) => s + c.demand, 0);
 
-  const cx = 180;
-  const cy = 150;
-  const rx = 120;
-  const ry = 110;
+  // Live incoming-customer strip: who is seated now (with their remaining counter),
+  // who is still queued to arrive, and who is already done.
+  const seatedByIdx = new Map<number, (typeof gs.seats)[number]>(
+    gs.seats.filter((s) => s.customerIdx >= 0).map((s) => [s.customerIdx, s]),
+  );
+  const customerList = level.customers.map((c, idx) => {
+    const seat = seatedByIdx.get(idx);
+    if (seat) return { idx, dish: c.dish, count: seat.remaining, state: 'seated' as const };
+    if (idx < gs.nextCustomerIdx) return { idx, dish: c.dish, count: 0, state: 'done' as const };
+    return { idx, dish: c.dish, count: c.demand, state: 'incoming' as const };
+  });
+
+  // Board geometry — enlarged ~40% for readability.
+  const cx = 250;
+  const cy = 205;
+  const rx = 168;
+  const ry = 150;
 
   return (
     <div className="w-full h-full flex flex-col lg:flex-row text-slate-800">
@@ -180,36 +185,59 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-5 flex flex-col items-center gap-5">
-          {/* All dishes in this level */}
-          <div className={`${PANEL} w-full max-w-md px-4 py-3`}>
-            <div className="flex items-center gap-2 mb-2">
-              <Layers className="w-3.5 h-3.5 text-violet-600" />
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                Dishes in this level
+        <div className="flex-1 overflow-auto p-5 flex flex-col items-center gap-6">
+          {/* Incoming customers — who to serve, with their live demand counters */}
+          <div className={`${PANEL} w-full max-w-2xl px-5 py-4`}>
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-4 h-4 text-violet-600" />
+              <span className="text-xs font-mono uppercase tracking-wider text-slate-500">
+                Incoming customers
+              </span>
+              <span className="text-[10px] font-mono text-slate-400 ml-auto">
+                seated · waiting · served
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {dishesInLevel.map((d) => (
-                <div key={d} className="flex items-center gap-1.5">
-                  <DishChip dish={d} size={26} />
+            <div className="flex items-end gap-3 overflow-x-auto pb-1">
+              {customerList.map((c) => (
+                <div
+                  key={c.idx}
+                  className={`shrink-0 flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-2.5 ${
+                    c.state === 'seated'
+                      ? 'border-amber-400 bg-amber-50'
+                      : c.state === 'done'
+                      ? 'border-slate-200 bg-slate-50 opacity-40'
+                      : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  <DishChip dish={c.dish} size={42} dim={c.state === 'done'} />
+                  <span
+                    className={`text-base font-mono font-bold leading-none ${
+                      c.state === 'done'
+                        ? 'text-slate-400'
+                        : c.state === 'seated'
+                        ? 'text-amber-700'
+                        : 'text-slate-700'
+                    }`}
+                  >
+                    {c.state === 'done' ? '✓' : `×${c.count}`}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Belt + seats */}
-          <div className="relative" style={{ width: 360, height: 300 }}>
+          <div className="relative" style={{ width: 520, height: 430 }}>
             <div
               className="absolute rounded-[50%] border-2 border-violet-300"
-              style={{ left: cx - rx - 18, top: cy - ry - 18, width: (rx + 18) * 2, height: (ry + 18) * 2, background: 'rgba(124,58,237,0.05)' }}
+              style={{ left: cx - rx - 24, top: cy - ry - 24, width: (rx + 24) * 2, height: (ry + 24) * 2, background: 'rgba(124,58,237,0.05)' }}
             />
             <div
               className="absolute rounded-[50%] border border-dashed border-violet-200"
-              style={{ left: cx - rx + 22, top: cy - ry + 22, width: (rx - 22) * 2, height: (ry - 22) * 2 }}
+              style={{ left: cx - rx + 30, top: cy - ry + 30, width: (rx - 30) * 2, height: (ry - 30) * 2 }}
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className="text-[10px] font-mono text-violet-400 tracking-widest">BELT ↻</span>
+              <span className="text-xs font-mono text-violet-400 tracking-widest">BELT ↻</span>
             </div>
 
             {Array.from({ length: 12 }).map((_, i) => {
@@ -220,15 +248,15 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                 <div
                   key={i}
                   className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
-                  style={{ left: p.x, top: p.y, width: 36, height: 36 }}
+                  style={{ left: p.x, top: p.y, width: 50, height: 50 }}
                 >
                   <div
                     className={`absolute inset-0 rounded-full border ${
                       isSeat ? 'border-amber-400 bg-amber-50' : 'border-slate-300 bg-slate-50'
                     }`}
                   />
-                  <span className="absolute -top-3 text-[7px] font-mono text-slate-400">{i}</span>
-                  {plate ? <DishChip dish={plate.dish} size={30} /> : null}
+                  <span className="absolute -top-4 text-[9px] font-mono text-slate-400">{i}</span>
+                  {plate ? <DishChip dish={plate.dish} size={42} /> : null}
                 </div>
               );
             })}
@@ -239,8 +267,8 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
               const dx = p.x - cx;
               const dy = p.y - cy;
               const len = Math.hypot(dx, dy) || 1;
-              const ox = p.x + (dx / len) * 34;
-              const oy = p.y + (dy / len) * 34;
+              const ox = p.x + (dx / len) * 46;
+              const oy = p.y + (dy / len) * 46;
               return (
                 <div
                   key={si}
@@ -248,16 +276,16 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                   style={{ left: ox, top: oy }}
                 >
                   {seat.customerIdx >= 0 && seat.dish ? (
-                    <div className="flex flex-col items-center gap-0.5">
-                      <DishChip dish={seat.dish} size={24} />
-                      <span className="text-[9px] font-mono text-slate-700 bg-white border border-slate-200 px-1 rounded shadow-sm">
+                    <div className="flex flex-col items-center gap-1">
+                      <DishChip dish={seat.dish} size={34} />
+                      <span className="text-xs font-mono font-bold text-slate-700 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md shadow-sm">
                         ×{seat.remaining}
                       </span>
                     </div>
                   ) : seat.turnover > 0 ? (
-                    <span className="text-[9px] font-mono text-slate-400">…</span>
+                    <span className="text-xs font-mono text-slate-400">…</span>
                   ) : (
-                    <span className="text-[9px] font-mono text-slate-300">empty</span>
+                    <span className="text-xs font-mono text-slate-300">empty</span>
                   )}
                 </div>
               );
@@ -265,20 +293,20 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
           </div>
 
           {/* Dock (tap a dish to send it back onto the belt) */}
-          <div className="w-full max-w-md">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
+          <div className="w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono uppercase tracking-wider text-slate-500">
                 Dock — tap a dish to send it back
               </span>
               <span
-                className={`text-[10px] font-mono font-bold ${
+                className={`text-sm font-mono font-bold ${
                   gs.buffer.length >= 4 ? 'text-rose-600' : 'text-slate-500'
                 }`}
               >
                 {gs.buffer.length}/{FIXED.bufferSlots}
               </span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               {Array.from({ length: FIXED.bufferSlots }).map((_, i) => {
                 const dish = gs.buffer[i];
                 const isRec = dish && recommendedDock === dish && status === 'playing';
@@ -288,7 +316,7 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                     key={i}
                     onClick={() => dish && handleDockDispatch(dish)}
                     disabled={!canTap}
-                    className={`flex-1 h-12 rounded-lg border-2 flex items-center justify-center transition cursor-pointer disabled:cursor-not-allowed ${
+                    className={`flex-1 h-16 rounded-xl border-2 flex items-center justify-center transition cursor-pointer disabled:cursor-not-allowed ${
                       isRec
                         ? 'border-emerald-500 bg-emerald-50'
                         : dish
@@ -296,33 +324,35 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                         : 'bg-slate-50 border-slate-200'
                     }`}
                   >
-                    {dish ? <DishChip dish={dish} size={32} /> : null}
+                    {dish ? <DishChip dish={dish} size={44} /> : null}
                   </button>
                 );
               })}
             </div>
             {!bufferEntryFree(gs) && gs.buffer.length > 0 && (
-              <p className="text-[9px] font-mono text-amber-600 mt-1">
+              <p className="text-[11px] font-mono text-amber-600 mt-1.5">
                 Belt is full — clear some space before sending a dock plate back.
               </p>
             )}
           </div>
 
-          {/* Dispatch lanes — full columns (front on top), tap a column to send its front plate */}
-          <div className="w-full max-w-md">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 block mb-1.5">
+          {/* Dispatch lanes — only the next 3 plates per lane (3rd half-peeking) */}
+          <div className="w-full max-w-2xl">
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-500 block mb-2">
               Dispatch lanes — tap a column (front on top, any lane any time)
             </span>
             <div className="flex gap-3 justify-center items-start">
               {gs.queues.map((lane, li) => {
                 const dispatchable = laneDispatchable(gs, li) && status === 'playing';
                 const isRecommended = recommendedLane === li && status === 'playing';
+                const top3 = lane.slice(0, 3);
+                const extra = lane.length - top3.length;
                 return (
                   <button
                     key={li}
                     onClick={() => handleDispatch(li)}
                     disabled={!dispatchable}
-                    className={`relative flex-1 max-w-[84px] rounded-2xl border-2 p-2 transition cursor-pointer disabled:cursor-not-allowed ${
+                    className={`relative flex-1 max-w-[120px] rounded-2xl border-2 p-3 transition cursor-pointer disabled:cursor-not-allowed ${
                       isRecommended
                         ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-200'
                         : dispatchable
@@ -331,7 +361,7 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                     }`}
                   >
                     <div
-                      className={`text-[9px] font-mono font-bold text-center mb-1.5 ${
+                      className={`text-xs font-mono font-bold text-center mb-2 ${
                         isRecommended ? 'text-emerald-700' : 'text-slate-500'
                       }`}
                     >
@@ -343,26 +373,43 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                           transition={{ repeat: Infinity, repeatType: 'reverse', duration: 0.7 }}
                           className="ml-1 inline-flex items-center text-emerald-600"
                         >
-                          <Target className="w-2.5 h-2.5" />
+                          <Target className="w-3 h-3" />
                         </motion.span>
                       )}
                     </div>
-                    <div className="flex flex-col gap-1 items-center max-h-[210px] overflow-y-auto">
+                    <div className="flex flex-col gap-1.5 items-center">
                       {lane.length === 0 ? (
-                        <span className="text-[9px] font-mono text-slate-400 py-2">empty</span>
+                        <span className="text-xs font-mono text-slate-400 py-3">empty</span>
                       ) : (
-                        lane.map((dish, di) => (
-                          <DishChip
-                            key={di}
-                            dish={dish}
-                            size={di === 0 ? 34 : 24}
-                            dim={di !== 0}
-                            ring={di === 0 && isRecommended}
-                          />
-                        ))
+                        top3.map((dish, di) => {
+                          const isFront = di === 0;
+                          // The 3rd plate peeks at half height to hint "more below".
+                          if (di === 2) {
+                            return (
+                              <div
+                                key={di}
+                                className="overflow-hidden flex items-start justify-center"
+                                style={{ height: 24 }}
+                              >
+                                <DishChip dish={dish} size={48} dim />
+                              </div>
+                            );
+                          }
+                          return (
+                            <DishChip
+                              key={di}
+                              dish={dish}
+                              size={isFront ? 56 : 48}
+                              dim={!isFront}
+                              ring={isFront && isRecommended}
+                            />
+                          );
+                        })
                       )}
                     </div>
-                    <div className="text-[9px] font-mono text-slate-400 text-center mt-1">{lane.length}</div>
+                    <div className="text-xs font-mono text-slate-500 font-bold text-center mt-2">
+                      {extra > 0 ? `+${extra} more · ${lane.length}` : `${lane.length} left`}
+                    </div>
                   </button>
                 );
               })}
