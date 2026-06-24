@@ -40,8 +40,12 @@ export const FIXED = {
   beltSlots: 12,
   bufferSlots: 5,
   beltSpeedMs: 850,
-  /** Belt ticks a seat stays empty after its customer is satisfied before the next arrives. */
-  seatTurnoverTicks: 5,
+  /**
+   * Belt ticks a seat stays empty after its customer is satisfied before the next
+   * arrives. Snappier turnover (reduced ~30% from 5) keeps the loop lively; fewer empty
+   * ticks only make levels easier, so existing solved plans stay valid.
+   */
+  seatTurnoverTicks: 3,
 } as const;
 
 /**

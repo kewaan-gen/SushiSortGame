@@ -32,6 +32,8 @@ import {
   laneDispatchable,
   seatSlotsFor,
   remainingDemand,
+  firstFreeSlotFrom,
+  BELT_ENTRY_SLOT,
 } from '../../forge/simulator';
 import { DishChip, Stat, PANEL, ACCENT_BTN, GHOST_BTN, DifficultyPill } from './shared';
 
@@ -44,11 +46,59 @@ type Status = 'playing' | 'won' | 'lost';
 
 const BELT_TICK_MS = FIXED.beltSpeedMs;
 
-/** Position of belt slot i on an oval (schematic). */
+/**
+ * Position of belt slot i on an oval (schematic).
+ * Slot 0 sits at the BOTTOM; slots increase counter-clockwise (0 bottom -> 1 lower-right
+ * -> 3 right -> 6 top -> 9 left), matching the direction plates travel.
+ */
 function slotPos(i: number, cx: number, cy: number, rx: number, ry: number) {
   const theta = (i / 12) * Math.PI * 2;
-  return { x: cx + rx * Math.sin(theta), y: cy - ry * Math.cos(theta) };
+  return { x: cx + rx * Math.sin(theta), y: cy + ry * Math.cos(theta) };
 }
+
+let laneIdSeq = 0;
+/** Stable per-plate ids so queue rows can layout-animate as the front is dispatched. */
+function makeLaneIds(queues: DishLetter[][]): number[][] {
+  return queues.map((lane) => lane.map(() => laneIdSeq++));
+}
+
+interface Flight {
+  id: number;
+  dish: DishLetter;
+  slot: number;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+}
+
+/** A short celebratory particle burst around a seat when a dish is eaten. */
+const EatParticles: React.FC<{ big?: boolean }> = ({ big }) => {
+  const n = big ? 10 : 6;
+  return (
+    <>
+      {Array.from({ length: n }).map((_, k) => {
+        const ang = (k / n) * Math.PI * 2 + (big ? 0.3 : 0);
+        const dist = (big ? 34 : 24) + (k % 3) * 5;
+        const sz = big ? 7 : 5;
+        return (
+          <motion.span
+            key={k}
+            className="absolute left-1/2 top-1/2 rounded-full"
+            style={{
+              width: sz,
+              height: sz,
+              marginLeft: -sz / 2,
+              marginTop: -sz / 2,
+              backgroundColor: big ? '#f59e0b' : '#34d399',
+            }}
+            initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+            animate={{ x: Math.cos(ang) * dist, y: Math.sin(ang) * dist, opacity: 0, scale: 0.3 }}
+            transition={{ duration: big ? 0.7 : 0.55, ease: 'easeOut' }}
+          />
+        );
+      })}
+    </>
+  );
+};
 
 export const PlayView: React.FC<Props> = ({ level, onExit }) => {
   const def: LevelDef = {
@@ -67,6 +117,68 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
   const [deviations, setDeviations] = useState(0);
   const gsRef = useRef(gs);
   gsRef.current = gs;
+
+  // --- Juice: dispatch flights, queue layout ids, eat pulses + particle bursts ---
+  const [laneIds, setLaneIds] = useState<number[][]>(() => makeLaneIds(level.queues));
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const [pulse, setPulse] = useState<number[]>(() => def.customers.length ? gsRef.current.seats.map(() => 0) : []);
+  const [bursts, setBursts] = useState<{ id: number; seat: number; big: boolean }[]>([]);
+  const playRef = useRef<HTMLDivElement>(null);
+  const flightSeq = useRef(0);
+  const burstSeq = useRef(0);
+  const prevSeatsRef = useRef(gs.seats.map((s) => ({ c: s.customerIdx, r: s.remaining })));
+
+  const centerInPlay = (el: Element | null | undefined): { x: number; y: number } | null => {
+    if (!el || !playRef.current) return null;
+    const host = playRef.current;
+    const p = host.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    // Content-space coords (add scroll) so the absolute overlay aligns even when scrolled.
+    return {
+      x: r.left + r.width / 2 - p.left + host.scrollLeft,
+      y: r.top + r.height / 2 - p.top + host.scrollTop,
+    };
+  };
+
+  const launchFlight = (dish: DishLetter, fromEl: Element | null | undefined, toSlot: number) => {
+    const from = centerInPlay(fromEl);
+    const to = centerInPlay(playRef.current?.querySelector(`[data-belt-slot="${toSlot}"]`));
+    if (!from || !to) return;
+    const id = ++flightSeq.current;
+    setFlights((f) => [...f, { id, dish, slot: toSlot, from, to }]);
+    window.setTimeout(() => setFlights((f) => f.filter((x) => x.id !== id)), 460);
+  };
+
+  // Belt slots currently masked by an in-flight chip (so we never show a duplicate plate).
+  const coveredSlots = new Set(flights.map((f) => f.slot));
+
+  const triggerEat = (seatIdx: number, big: boolean) => {
+    setPulse((p) => {
+      const n = [...p];
+      n[seatIdx] = (n[seatIdx] ?? 0) + 1;
+      return n;
+    });
+    const id = ++burstSeq.current;
+    setBursts((b) => [...b, { id, seat: seatIdx, big }]);
+    window.setTimeout(() => setBursts((b) => b.filter((x) => x.id !== id)), big ? 750 : 600);
+  };
+
+  // Detect dishes being eaten (remaining drops, or a customer leaves after the last bite).
+  useEffect(() => {
+    const prev = prevSeatsRef.current;
+    gs.seats.forEach((s, i) => {
+      const p = prev[i];
+      if (!p) return;
+      if (p.c >= 0 && p.c === s.customerIdx && s.remaining < p.r) {
+        triggerEat(i, false);
+      } else if (p.c >= 0 && p.c !== s.customerIdx && p.r > 0) {
+        // Customer finished their last bite and left — celebratory burst.
+        triggerEat(i, true);
+      }
+    });
+    prevSeatsRef.current = gs.seats.map((s) => ({ c: s.customerIdx, r: s.remaining }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gs]);
 
   const nextStep = ptr < plan.length ? plan[ptr] : null;
   const recIsBuffer = nextStep?.source === 'buffer';
@@ -102,19 +214,27 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
   const handleDispatch = (lane: number) => {
     if (status !== 'playing') return;
     if (!laneDispatchable(gs, lane)) return;
+    const entry = firstFreeSlotFrom(gs, BELT_ENTRY_SLOT);
+    const dish = gs.queues[lane][0];
     const next = dispatch(gs, def, lane);
     setGs(next);
+    setLaneIds((prev) => prev.map((ids, i) => (i === lane ? ids.slice(1) : ids)));
+    if (dish && entry >= 0) {
+      launchFlight(dish, playRef.current?.querySelector(`[data-lane-front="${lane}"]`), entry);
+    }
     setMovesMade((m) => m + 1);
     if (recommendedLane === lane) setPtr((p) => p + 1);
     else setDeviations((d) => d + 1);
     checkEnd(next);
   };
 
-  const handleDockDispatch = (dish: DishLetter) => {
+  const handleDockDispatch = (dish: DishLetter, fromEl?: Element | null) => {
     if (status !== 'playing') return;
     if (!bufferEntryFree(gs) || !gs.buffer.includes(dish)) return;
+    const entry = firstFreeSlotFrom(gs, BELT_ENTRY_SLOT);
     const next = dispatchBuffer(gs, def, dish);
     setGs(next);
+    if (entry >= 0) launchFlight(dish, fromEl, entry);
     setMovesMade((m) => m + 1);
     if (recommendedDock === dish) setPtr((p) => p + 1);
     else setDeviations((d) => d + 1);
@@ -122,7 +242,13 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
   };
 
   const restart = () => {
-    setGs(createInitialState(def));
+    const fresh = createInitialState(def);
+    prevSeatsRef.current = fresh.seats.map((s) => ({ c: s.customerIdx, r: s.remaining }));
+    setGs(fresh);
+    setLaneIds(makeLaneIds(level.queues));
+    setFlights([]);
+    setBursts([]);
+    setPulse(fresh.seats.map(() => 0));
     setStatus('playing');
     setRunning(true);
     setPtr(0);
@@ -185,7 +311,33 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-5 flex flex-col items-center gap-6">
+        <div ref={playRef} className="relative flex-1 overflow-auto p-5 flex flex-col items-center gap-6">
+          {/* Dispatch flight overlay (queue/dock -> belt jumps). No exit anim: the chip
+              vanishes the instant it lands, exactly as the real belt plate is revealed. */}
+          <div className="pointer-events-none absolute inset-0 z-30 overflow-visible">
+            {flights.map((f) => {
+              const peak = Math.min(f.from.y, f.to.y) - 70;
+              return (
+                <motion.div
+                  key={f.id}
+                  className="absolute left-0 top-0"
+                  initial={{ x: f.from.x, y: f.from.y, scale: 1 }}
+                  animate={{
+                    x: f.to.x,
+                    y: [f.from.y, peak, f.to.y],
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, 0],
+                  }}
+                  transition={{ duration: 0.44, ease: 'easeOut' }}
+                >
+                  <div className="-translate-x-1/2 -translate-y-1/2 drop-shadow-lg">
+                    <DishChip dish={f.dish} size={42} />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
           {/* Incoming customers — who to serve, with their live demand counters */}
           <div className={`${PANEL} w-full max-w-2xl px-5 py-4`}>
             <div className="flex items-center gap-2 mb-3">
@@ -247,6 +399,7 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
               return (
                 <div
                   key={i}
+                  data-belt-slot={i}
                   className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
                   style={{ left: p.x, top: p.y, width: 50, height: 50 }}
                 >
@@ -256,7 +409,7 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                     }`}
                   />
                   <span className="absolute -top-4 text-[9px] font-mono text-slate-400">{i}</span>
-                  {plate ? <DishChip dish={plate.dish} size={42} /> : null}
+                  {plate && !coveredSlots.has(i) ? <DishChip dish={plate.dish} size={42} /> : null}
                 </div>
               );
             })}
@@ -275,9 +428,34 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                   className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
                   style={{ left: ox, top: oy }}
                 >
+                  {/* Eat particle bursts for this seat */}
+                  <div className="absolute left-1/2 top-3 w-0 h-0">
+                    <AnimatePresence>
+                      {bursts
+                        .filter((b) => b.seat === si)
+                        .map((b) => (
+                          <motion.div
+                            key={b.id}
+                            initial={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute left-0 top-0 w-0 h-0"
+                          >
+                            <EatParticles big={b.big} />
+                          </motion.div>
+                        ))}
+                    </AnimatePresence>
+                  </div>
+
                   {seat.customerIdx >= 0 && seat.dish ? (
                     <div className="flex flex-col items-center gap-1">
-                      <DishChip dish={seat.dish} size={34} />
+                      <motion.div
+                        key={pulse[si] ?? 0}
+                        initial={{ scale: 1 }}
+                        animate={{ scale: (pulse[si] ?? 0) > 0 ? [1, 1.4, 1] : 1 }}
+                        transition={{ duration: 0.34, ease: 'easeOut' }}
+                      >
+                        <DishChip dish={seat.dish} size={34} />
+                      </motion.div>
                       <span className="text-xs font-mono font-bold text-slate-700 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md shadow-sm">
                         ×{seat.remaining}
                       </span>
@@ -314,7 +492,7 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                 return (
                   <button
                     key={i}
-                    onClick={() => dish && handleDockDispatch(dish)}
+                    onClick={(e) => dish && handleDockDispatch(dish, e.currentTarget)}
                     disabled={!canTap}
                     className={`flex-1 h-16 rounded-xl border-2 flex items-center justify-center transition cursor-pointer disabled:cursor-not-allowed ${
                       isRec
@@ -381,30 +559,41 @@ export const PlayView: React.FC<Props> = ({ level, onExit }) => {
                       {lane.length === 0 ? (
                         <span className="text-xs font-mono text-slate-400 py-3">empty</span>
                       ) : (
-                        top3.map((dish, di) => {
-                          const isFront = di === 0;
-                          // The 3rd plate peeks at half height to hint "more below".
-                          if (di === 2) {
+                        <AnimatePresence initial={false} mode="popLayout">
+                          {top3.map((dish, di) => {
+                            const isFront = di === 0;
+                            const id = laneIds[li]?.[di] ?? `${li}-${di}-${dish}`;
+                            const chip =
+                              di === 2 ? (
+                                <div
+                                  className="overflow-hidden flex items-start justify-center"
+                                  style={{ height: 24 }}
+                                >
+                                  <DishChip dish={dish} size={48} dim />
+                                </div>
+                              ) : (
+                                <DishChip
+                                  dish={dish}
+                                  size={isFront ? 56 : 48}
+                                  dim={!isFront}
+                                  ring={isFront && isRecommended}
+                                />
+                              );
                             return (
-                              <div
-                                key={di}
-                                className="overflow-hidden flex items-start justify-center"
-                                style={{ height: 24 }}
+                              <motion.div
+                                key={id}
+                                layout
+                                {...(isFront ? { 'data-lane-front': li } : {})}
+                                initial={{ opacity: 0, y: 16, scale: 0.7 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.12 } }}
+                                transition={{ type: 'spring', stiffness: 520, damping: 34 }}
                               >
-                                <DishChip dish={dish} size={48} dim />
-                              </div>
+                                {chip}
+                              </motion.div>
                             );
-                          }
-                          return (
-                            <DishChip
-                              key={di}
-                              dish={dish}
-                              size={isFront ? 56 : 48}
-                              dim={!isFront}
-                              ring={isFront && isRecommended}
-                            />
-                          );
-                        })
+                          })}
+                        </AnimatePresence>
                       )}
                     </div>
                     <div className="text-xs font-mono text-slate-500 font-bold text-center mt-2">

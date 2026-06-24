@@ -3,14 +3,16 @@
  *
  * Mirrors the real belt loop in App.tsx (tickConveyorBelt / handleDispatchQueue /
  * feedCustomerAtSeat):
- *  - 12 belt slots, plates move counter-clockwise: slot -> (slot + 1) % 12 each tick.
- *  - A plate dispatched from lane i enters the belt at slot i.
+ *  - 12 belt slots, plates advance one slot per tick: slot -> (slot + 1) % 12.
+ *  - EVERY dispatched plate (from any lane) enters the belt at slot 0 (the bottom). If
+ *    slot 0 is occupied, it fills the next free slot forward (0 -> 1 -> 2 ...), so plates
+ *    form a contiguous chain from slot 0 and advance together each tick.
  *  - A plate that completes a full rotation (12 steps) without being eaten drops into
  *    the overflow DOCK, keeping its dish letter.
  *  - The dock holds up to bufferSlots dishes. A drop with no free dock slot => failure.
- *  - Dock plates are tappable: re-dispatching one back onto the belt is a MOVE (it
- *    re-enters at BUFFER_ENTRY_SLOT). This lets the player park plates they don't need
- *    yet, serve other customers, then send the parked plate back for delivery.
+ *  - Dock plates are tappable: re-dispatching one back onto the belt is a MOVE (it also
+ *    re-enters at slot 0). This lets the player park plates they don't need yet, serve
+ *    other customers, then send the parked plate back for delivery.
  *  - When a plate sits on a seat's slot and that seat's waiting customer wants that
  *    dish, the plate is intercepted and one dish is eaten.
  *  - Eating is modelled as instant (real eat delay 50ms << belt 850ms), so a customer
@@ -57,8 +59,8 @@ export interface LevelDef {
   numSeats: number;
 }
 
-/** Belt slot where a re-dispatched dock plate re-enters (free of seats/lanes). */
-export const BUFFER_ENTRY_SLOT = 6;
+/** Single belt entry point: every dispatched plate enters here (or the next free slot forward). */
+export const BELT_ENTRY_SLOT = 0;
 
 /** A single tap/move: dispatch a lane front, or re-dispatch a dock dish. */
 export type Action = { kind: 'lane'; lane: number } | { kind: 'buffer'; dish: DishLetter };
@@ -201,7 +203,8 @@ export function dispatch(prev: GameState, level: LevelDef, lane: number): GameSt
   const state = cloneState(prev);
   if (!laneDispatchable(state, lane)) return state; // no-op (caller should avoid)
 
-  const entrySlot = firstFreeSlotFrom(state, lane);
+  // All plates enter at slot 0, filling forward (0 -> 1 -> 2 ...) into a chain.
+  const entrySlot = firstFreeSlotFrom(state, BELT_ENTRY_SLOT);
   if (entrySlot < 0) return state; // belt full, no-op
 
   const dish = state.queues[lane].shift()!;
@@ -225,13 +228,13 @@ export function dispatch(prev: GameState, level: LevelDef, lane: number): GameSt
 
 /**
  * Re-dispatch a dock plate of `dish` back onto the belt (a move).
- * It re-enters at BUFFER_ENTRY_SLOT and rides the belt to be intercepted.
+ * It re-enters at slot 0 (like any dispatch) and rides the belt to be intercepted.
  */
 export function dispatchBuffer(prev: GameState, level: LevelDef, dish: DishLetter): GameState {
   const state = cloneState(prev);
   const idx = state.buffer.indexOf(dish);
   if (idx < 0) return state; // no-op
-  const entrySlot = firstFreeSlotFrom(state, BUFFER_ENTRY_SLOT);
+  const entrySlot = firstFreeSlotFrom(state, BELT_ENTRY_SLOT);
   if (entrySlot < 0) return state; // belt full
 
   state.buffer.splice(idx, 1);
